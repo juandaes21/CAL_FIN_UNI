@@ -1,0 +1,107 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculadora de Ahorro para Universidad</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <p class="eyebrow">Planificador financiero estudiantil</p>
+        <h1>Calcula cuánto ahorrar cada mes para pagar tu universidad</h1>
+        <p class="lead">
+          Ingresa el costo del semestre, cuántos semestres piensas estudiar, los años
+          que faltan para entrar, la rentabilidad esperada de tu inversión y la
+          inflación promedio objetivo.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Parámetros</h2>
+          <form id="calc-form" autocomplete="off">
+            <label>
+              Costo del semestre
+              <div class="input-row">
+                <span class="prefix">$</span>
+                <input id="costo" type="number" min="0" step="0.01" placeholder="Ej: 3500" />
+              </div>
+            </label>
+
+            <label>
+              Cantidad de semestres
+              <input id="semestres" type="number" min="1" step="1" placeholder="Ej: 8" />
+            </label>
+
+            <label>
+              Años para entrar a la universidad
+              <input id="anios" type="number" min="0" step="0.1" placeholder="Ej: 3" />
+            </label>
+
+            <label>
+              Rentabilidad anual esperada (%)
+              <input id="rentabilidad" type="number" min="0" step="0.1" placeholder="Ej: 7.5" />
+            </label>
+
+            <label>
+              Inflación anual promedio (%)
+              <input id="inflacion" type="number" min="0" step="0.1" placeholder="Ej: 4" />
+            </label>
+
+            <button type="button" id="calcular">Calcular</button>
+          </form>
+          <p class="note">
+            La rentabilidad y la inflación se convierten a tasa mensual efectiva. Si alguna
+            es 0, el cálculo se hace sin ese efecto.
+          </p>
+        </section>
+
+        <section class="card result-card">
+          <h2>Resultado</h2>
+          <div class="result-grid">
+            <div>
+              <p class="label">Ahorro mensual sugerido</p>
+              <p class="value" id="ahorro-mensual">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Monto total objetivo (con inflación)</p>
+              <p class="value" id="monto-total">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Meses de ahorro</p>
+              <p class="value" id="meses">0</p>
+            </div>
+            <div>
+              <p class="label">Tasa mensual efectiva</p>
+              <p class="value" id="tasa-mensual">0%</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <h2>Tabla de acumulación</h2>
+          <div class="table-summary" id="tabla-resumen">Ingresa los datos para ver la tabla.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>Ahorro mensual</th>
+                <th>Capital sin rendimientos</th>
+                <th>Capital + rendimientos</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
