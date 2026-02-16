@@ -1,0 +1,203 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculadora de Ahorro para Pension</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <nav class="top-nav">
+        <div class="nav-left">
+          <a class="nav-logo" href="index.html">Fides Financial</a>
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Universidad</a>
+          <a class="active" href="pension.html">Pension</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="brand">
+          <img class="logo" src="logo.png" alt="Fides Financial" />
+        </div>
+        <p class="eyebrow">Planificador financiero</p>
+        <h1>Calcula el ahorro necesario para pensionarte</h1>
+        <p class="lead">
+          Estima el aporte mensual o anual necesario para alcanzar un ingreso de retiro
+          por el tiempo que definas.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Parametros</h2>
+          <form id="pension-form" autocomplete="off">
+            <div class="form-grid">
+              <label>
+                Ingreso deseado en el retiro
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input
+                    id="ingreso"
+                    class="money-input"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="Ej: 6,000,000"
+                  />
+                </div>
+              </label>
+
+              <label>
+                Moneda de calculo
+                <select id="moneda-pension">
+                  <option value="COP">Pesos (COP)</option>
+                  <option value="USD">Dolares (USD)</option>
+                </select>
+              </label>
+
+              <label>
+                Frecuencia del ingreso
+                <select id="frecuencia-ingreso">
+                  <option value="mensual">Mensual</option>
+                  <option value="anual">Anual</option>
+                </select>
+              </label>
+
+              <label>
+                Tipo de retiro
+                <select id="tipo-retiro">
+                  <option value="perpetua">Perpetua</option>
+                  <option value="tiempo">Por tiempo</option>
+                </select>
+              </label>
+
+              <label>
+                Duracion del retiro (anios)
+                <input id="duracion-retiro" type="number" min="1" step="1" placeholder="Ej: 25" />
+              </label>
+
+              <label>
+                Anios para pensionarse (X)
+                <input id="anios-retiro" type="number" min="0" step="0.1" placeholder="Ej: 20" />
+              </label>
+
+              <label>
+                Anios de ahorro (Y)
+                <input id="anios-ahorro" type="number" min="0" step="0.1" placeholder="Ej: 15" />
+              </label>
+
+              <label>
+                Rentabilidad anual esperada (%)
+                <input id="rentabilidad-pension" type="number" min="0" step="0.1" placeholder="Ej: 6.5" />
+              </label>
+
+              <label>
+                Inflacion anual promedio (%)
+                <input id="inflacion-pension" type="number" min="0" step="0.1" placeholder="Ej: 4" />
+              </label>
+
+              <label>
+                Rentabilidad conservadora sobre inflacion (%)
+                <input id="conservador-pension" type="number" min="0" step="0.1" value="2" />
+              </label>
+
+              <label>
+                Frecuencia de aporte
+                <select id="frecuencia">
+                  <option value="mensual">Mensual</option>
+                  <option value="anual">Anual</option>
+                </select>
+              </label>
+            </div>
+
+            <button type="button" id="calcular-pension">Calcular</button>
+          </form>
+          <p class="note">
+            Si el ahorro termina antes del retiro, el capital sigue creciendo hasta el
+            momento de pensionarse.
+          </p>
+        </section>
+
+        <section class="card result-card">
+          <h2>Resultado</h2>
+          <div class="result-grid">
+            <div>
+              <p class="label" id="aporte-label">Aporte requerido (COP)</p>
+              <p class="value" id="aporte-requerido">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Aporte requerido (USD)</p>
+              <p class="value" id="aporte-requerido-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">Ingreso ajustado (COP)</p>
+              <p class="value" id="ingreso-ajustado">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Ingreso ajustado (USD)</p>
+              <p class="value" id="ingreso-ajustado-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">Capital requerido (COP)</p>
+              <p class="value" id="capital-requerido">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Capital requerido (USD)</p>
+              <p class="value" id="capital-requerido-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">Total aportado (COP)</p>
+              <p class="value" id="total-aportado">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Total aportado (USD)</p>
+              <p class="value" id="total-aportado-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">Total retiros estimados (COP)</p>
+              <p class="value" id="total-retiros">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Total retiros estimados (USD)</p>
+              <p class="value" id="total-retiros-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">TRM actual (COP/USD)</p>
+              <p class="value" id="trm-valor-pension">--</p>
+            </div>
+            <div>
+              <p class="label">Tasa efectiva del periodo</p>
+              <p class="value" id="tasa-periodo">0%</p>
+            </div>
+          </div>
+          <p class="note" id="pension-note">Ingresa los datos para ver el resultado.</p>
+        </section>
+      </main>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <h2>Tabla de ahorro</h2>
+          <div class="table-summary" id="tabla-pension-resumen">Ingresa los datos para ver la tabla.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Periodo</th>
+                <th>Aporte</th>
+                <th>Retiro</th>
+                <th>Capital sin rendimientos</th>
+                <th>Capital + rendimientos</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-pension-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="pension.js"></script>
+  </body>
+</html>

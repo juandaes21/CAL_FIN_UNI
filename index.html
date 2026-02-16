@@ -8,98 +8,186 @@
   </head>
   <body>
     <div class="page">
+      <nav class="top-nav">
+        <div class="nav-left">
+          <a class="nav-logo" href="index.html">Fides Financial</a>
+        </div>
+        <div class="nav-links">
+          <a class="active" href="index.html">Universidad</a>
+          <a href="pension.html">Pension</a>
+        </div>
+      </nav>
+
       <header class="hero">
         <div class="brand">
           <img class="logo" src="logo.png" alt="Fides Financial" />
         </div>
         <p class="eyebrow">Planificador financiero estudiantil</p>
-        <h1>Calcula cuánto ahorrar cada mes para pagar tu universidad</h1>
+        <h1>Calcula cuanto ahorrar cada mes para pagar la universidad</h1>
         <p class="lead">
-          Ingresa el costo del semestre, cuántos semestres piensas estudiar, los años
-          que faltan para entrar, la rentabilidad esperada de tu inversión y la
-          inflación promedio objetivo.
+          Usa los costos, la rentabilidad esperada y la inflacion para proyectar el
+          ahorro necesario por hijo. Incluye conversion a TRM en tiempo real.
         </p>
       </header>
 
       <main class="layout">
         <section class="card form-card">
-          <h2>Parámetros</h2>
+          <h2>Parametros generales</h2>
           <form id="calc-form" autocomplete="off">
-            <label>
-              Costo del semestre
-              <div class="input-row">
-                <span class="prefix">$</span>
-                <input id="costo" type="number" min="0" step="0.01" placeholder="Ej: 3500" />
+            <div class="form-grid">
+              <label>
+                <span id="costo-label">Costo del semestre</span>
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input
+                    id="costo"
+                    class="money-input"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="Ej: 3,500,000"
+                  />
+                </div>
+              </label>
+
+              <label>
+                Moneda de calculo
+                <select id="moneda">
+                  <option value="COP">Pesos (COP)</option>
+                  <option value="USD">Dolares (USD)</option>
+                </select>
+              </label>
+
+              <label>
+                Duracion del programa
+                <input id="duracion" type="number" min="1" step="0.5" placeholder="Ej: 8" />
+              </label>
+
+              <label>
+                Unidad de duracion
+                <select id="duracion-unidad">
+                  <option value="semestres">Semestres</option>
+                  <option value="anios">Anios</option>
+                </select>
+              </label>
+
+              <label>
+                Rentabilidad anual esperada (%)
+                <input id="rentabilidad" type="number" min="0" step="0.1" placeholder="Ej: 7.5" />
+              </label>
+
+              <label>
+                Inflacion anual promedio (%)
+                <input id="inflacion" type="number" min="0" step="0.1" placeholder="Ej: 4" />
+              </label>
+
+              <label>
+                Rentabilidad conservadora sobre inflacion (%)
+                <input id="conservador" type="number" min="0" step="0.1" value="2" />
+              </label>
+
+              <label>
+                Anios de aporte (opcional)
+                <input id="anios-aporte" type="number" min="0" step="0.1" placeholder="Ej: 5" />
+              </label>
+              <p class="warning" id="aporte-warning" hidden></p>
+            </div>
+
+            <div class="form-inline">
+              <label class="check-row">
+                <input id="proyectar-retiros" type="checkbox" />
+                Proyectar retiros por anio durante el estudio
+              </label>
+            </div>
+
+            <div class="children-section">
+              <div class="section-head">
+                <h3>Hijos</h3>
+                <button class="ghost" type="button" id="add-child">Agregar hijo</button>
               </div>
-            </label>
-
-            <label>
-              Cantidad de semestres
-              <input id="semestres" type="number" min="1" step="1" placeholder="Ej: 8" />
-            </label>
-
-            <label>
-              Años para entrar a la universidad
-              <input id="anios" type="number" min="0" step="0.1" placeholder="Ej: 3" />
-            </label>
-
-            <label>
-              Rentabilidad anual esperada (%)
-              <input id="rentabilidad" type="number" min="0" step="0.1" placeholder="Ej: 7.5" />
-            </label>
-
-            <label>
-              Inflación anual promedio (%)
-              <input id="inflacion" type="number" min="0" step="0.1" placeholder="Ej: 4" />
-            </label>
+              <div id="children-list"></div>
+            </div>
 
             <button type="button" id="calcular">Calcular</button>
           </form>
           <p class="note">
-            La rentabilidad y la inflación se convierten a tasa mensual efectiva. Si alguna
-            es 0, el cálculo se hace sin ese efecto.
+            La rentabilidad y la inflacion se convierten a tasa mensual efectiva. Si no
+            ingresas los anos para entrar, se calcula con la edad actual y la edad de ingreso.
           </p>
         </section>
 
         <section class="card result-card">
-          <h2>Resultado</h2>
+          <h2>Resultados</h2>
           <div class="result-grid">
             <div>
-              <p class="label">Ahorro mensual sugerido</p>
+              <p class="label">Ahorro mensual total (COP)</p>
               <p class="value" id="ahorro-mensual">$0,00</p>
             </div>
             <div>
-              <p class="label">Monto total objetivo (con inflación)</p>
+              <p class="label">Ahorro mensual total (USD)</p>
+              <p class="value" id="ahorro-mensual-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">Ahorro anual total (COP)</p>
+              <p class="value" id="ahorro-anual">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Ahorro anual total (USD)</p>
+              <p class="value" id="ahorro-anual-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">Anios de aporte</p>
+              <p class="value" id="anios-aporte-res">0</p>
+            </div>
+            <div>
+              <p class="label">Total aportado</p>
+              <p class="value" id="total-aportado">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Total aportado (USD)</p>
+              <p class="value" id="total-aportado-usd">US$0.00</p>
+            </div>
+            <div>
+              <p class="label">TRM actual (COP/USD)</p>
+              <p class="value" id="trm-valor">--</p>
+            </div>
+            <div>
+              <p class="label" id="monto-label">Total de retiros estimados</p>
               <p class="value" id="monto-total">$0,00</p>
             </div>
             <div>
-              <p class="label">Meses de ahorro</p>
-              <p class="value" id="meses">0</p>
-            </div>
-            <div>
-              <p class="label">Tasa mensual efectiva</p>
-              <p class="value" id="tasa-mensual">0%</p>
+              <p class="label" id="monto-label-usd">Total de retiros estimados (USD)</p>
+              <p class="value" id="monto-total-usd">US$0.00</p>
             </div>
           </div>
+          <p class="note" id="trm-note">Cargando TRM...</p>
         </section>
       </main>
 
       <section class="card table-card">
         <div class="table-head">
-          <h2>Tabla de acumulación</h2>
-          <div class="table-summary" id="tabla-resumen">Ingresa los datos para ver la tabla.</div>
+          <h2>Detalle por hijo</h2>
+          <div class="table-summary" id="tabla-resumen">Ingresa los datos para ver las tablas.</div>
+        </div>
+        <div id="tablas-hijos" class="child-tables"></div>
+      </section>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <h2>Tabla total del ahorro</h2>
+          <div class="table-summary" id="tabla-total-resumen">Ingresa los datos para ver la tabla total.</div>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Mes</th>
-                <th>Ahorro mensual</th>
+                <th>Aporte</th>
+                <th>Retiro total</th>
                 <th>Capital sin rendimientos</th>
                 <th>Capital + rendimientos</th>
               </tr>
             </thead>
-            <tbody id="tabla-body"></tbody>
+            <tbody id="tabla-total-body"></tbody>
           </table>
         </div>
       </section>
