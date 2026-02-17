@@ -236,9 +236,31 @@ function computeCapitalRequiredTerm(periods, rate, withdrawalFn) {
   let capital = 0;
   for (let i = periods; i >= 1; i -= 1) {
     const retiro = withdrawalFn(i);
-    capital = retiro + capital / (1 + rate);
+    capital = (capital + retiro) / (1 + rate);
   }
   return capital;
+}
+
+function sumDiscountFactors(rate, periods, startExponent = 1) {
+  let total = 0;
+  for (let i = 0; i < periods; i += 1) {
+    total += 1 / Math.pow(1 + rate, startExponent + i);
+  }
+  return total;
+}
+
+function computeCapitalRequiredPerpetual({
+  periodRate,
+  annualInflationRate,
+  periodsPerYear,
+  firstYearWithdrawalPV,
+}) {
+  const growthVsDiscount =
+    (1 + annualInflationRate) / Math.pow(1 + periodRate, periodsPerYear);
+
+  if (growthVsDiscount >= 1) return null;
+
+  return firstYearWithdrawalPV / (1 - growthVsDiscount);
 }
 
 function sumWithdrawals(periods, withdrawalFn) {
@@ -321,12 +343,10 @@ function calculate() {
   const tasaIngreso = ingresoMensual ? computeMonthlyRate(rentabilidad) : computeAnnualRate(rentabilidad);
   const tasaAporte = aporteMensual ? computeMonthlyRate(rentabilidad) : computeAnnualRate(rentabilidad);
   const conservadorAnnual = inflacion + (Number.isFinite(conservador) ? conservador : 0);
-  const tasaRetiro = ingresoMensual
-    ? computeMonthlyRate(conservadorAnnual)
-    : computeAnnualRate(conservadorAnnual);
   const tasaInflacionIngreso = ingresoMensual
     ? computeMonthlyRate(inflacion)
     : computeAnnualRate(inflacion);
+  const tasaInflacionAnual = computeAnnualRate(inflacion);
   const tasaRetiroTabla = aporteMensual
     ? computeMonthlyRate(conservadorAnnual)
     : computeAnnualRate(conservadorAnnual);
@@ -335,26 +355,24 @@ function calculate() {
   const retiroEnPeriodo = (i) => {
     if (i <= 0) return 0;
 
+    const periodsPerYear = aporteMensual ? 12 : 1;
+    const yearIndex = Math.floor((i - 1) / periodsPerYear);
+    const inflationFactor = Math.pow(1 + tasaInflacionAnual, yearIndex);
+
     if (aporteMensual && ingresoMensual) {
-      return ingresoAjustado * Math.pow(1 + tasaInflacionIngreso, i - 1);
+      return ingresoAjustado * inflationFactor;
     }
 
     if (aporteMensual && !ingresoMensual) {
-      if ((i - 1) % 12 !== 0) return 0;
-      const anioRetiro = Math.floor((i - 1) / 12) + 1;
-      return ingresoAjustado * Math.pow(1 + tasaInflacionIngreso, anioRetiro - 1);
+      if (i % 12 !== 0) return 0;
+      return ingresoAjustado * inflationFactor;
     }
 
     if (!aporteMensual && ingresoMensual) {
-      let retiroAnual = 0;
-      const inicioMes = (i - 1) * 12;
-      for (let m = 0; m < 12; m += 1) {
-        retiroAnual += ingresoAjustado * Math.pow(1 + tasaInflacionIngreso, inicioMes + m);
-      }
-      return retiroAnual;
+      return ingresoAjustado * 12 * inflationFactor;
     }
 
-    return ingresoAjustado * Math.pow(1 + tasaInflacionIngreso, i - 1);
+    return ingresoAjustado * inflationFactor;
   };
 
   let capitalRequerido = 0;
@@ -362,20 +380,35 @@ function calculate() {
   let totalRetiros = null;
 
   if (tipoRetiro === "perpetua") {
-    // For inflation-indexed withdrawals, perpetuity must be discounted at the
-    // net rate over inflation (real spread), not at the full nominal return.
-    const tasaNetaSobreInflacion =
-      (1 + tasaRetiro) / (1 + tasaInflacionIngreso) - 1;
+    const periodsPerYear = aporteMensual ? 12 : 1;
+    let firstYearWithdrawalPV = 0;
 
-    if (tasaNetaSobreInflacion <= 0) {
+    if (aporteMensual && ingresoMensual) {
+      firstYearWithdrawalPV =
+        ingresoAjustado * sumDiscountFactors(tasaRetiroTabla, 12, 1);
+    } else if (aporteMensual && !ingresoMensual) {
+      firstYearWithdrawalPV =
+        ingresoAjustado / Math.pow(1 + tasaRetiroTabla, 12);
+    } else if (!aporteMensual && ingresoMensual) {
+      firstYearWithdrawalPV =
+        (ingresoAjustado * 12) / (1 + tasaRetiroTabla);
+    } else {
+      firstYearWithdrawalPV = ingresoAjustado / (1 + tasaRetiroTabla);
+    }
+
+    const perpetuityCapital = computeCapitalRequiredPerpetual({
+      periodRate: tasaRetiroTabla,
+      annualInflationRate: tasaInflacionAnual,
+      periodsPerYear,
+      firstYearWithdrawalPV,
+    });
+
+    if (perpetuityCapital === null || perpetuityCapital <= 0) {
       capitalRequerido = 0;
       nota =
-        "Para retiro perpetuo, el spread sobre inflacion debe ser mayor a 0.";
+        "Para retiro perpetuo, la rentabilidad conservadora debe superar la inflacion anual.";
     } else {
-      // First retirement withdrawal happens at the beginning of the period.
-      capitalRequerido =
-        (ingresoAjustado * (1 + tasaNetaSobreInflacion)) /
-        tasaNetaSobreInflacion;
+      capitalRequerido = perpetuityCapital;
     }
   } else {
     const periodosRetiroTabla = aporteMensual
@@ -405,7 +438,7 @@ function calculate() {
     } else {
       const acumulado = (Math.pow(1 + tasaAporte, periodosAporte) - 1) / tasaAporte;
       const crecimiento = Math.pow(1 + tasaAporte, periodosCrecimiento);
-      const factor = acumulado * crecimiento;
+      const factor = acumulado * crecimiento * (1 + tasaAporte);
       aporte = factor > 0 ? capitalRequerido / factor : 0;
     }
   }
@@ -438,7 +471,7 @@ function calculate() {
   const retiroLabel =
     tipoRetiro === "perpetua"
       ? "Retiro perpetuo"
-      : `Retiro por ${duracionRetiro || 0} anios`;
+      : `Retiro por ${duracionRetiro || 0} años`;
 
   pensionNoteEl.textContent =
     nota || `${retiroLabel}. Capital se proyecta con rentabilidad conservadora desde el retiro.`;
@@ -474,7 +507,7 @@ function calculate() {
     }
 
     capitalSin = capitalSin + aportePeriodo - retiroPeriodo;
-    capitalCon = (capitalCon - retiroPeriodo) * (1 + tasa) + aportePeriodo;
+    capitalCon = (capitalCon + aportePeriodo) * (1 + tasa) - retiroPeriodo;
 
     const row = document.createElement("tr");
     row.innerHTML = `

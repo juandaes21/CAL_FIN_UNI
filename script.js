@@ -30,6 +30,8 @@ const tablaResumen = document.getElementById("tabla-resumen");
 const tablasHijos = document.getElementById("tablas-hijos");
 const tablaTotalResumen = document.getElementById("tabla-total-resumen");
 const tablaTotalBody = document.getElementById("tabla-total-body");
+const tablaVistaInput = document.getElementById("tabla-vista");
+const tablaPeriodoHead = document.getElementById("tabla-periodo-head");
 
 const BANREP_URL =
   "https://suameca.banrep.gov.co/estadisticas-economicas/informacionSerie/1/tasa_cambio_peso_colombiano_trm_dolar_usd/";
@@ -234,6 +236,11 @@ function clearTables() {
   tablaTotalBody.innerHTML = "";
 }
 
+function updatePeriodHeader() {
+  if (!tablaPeriodoHead || !tablaVistaInput) return;
+  tablaPeriodoHead.textContent = tablaVistaInput.value === "anual" ? "Año" : "Mes";
+}
+
 function updateRemoveButtons() {
   const rows = childrenList.querySelectorAll(".child-row");
   rows.forEach((row) => {
@@ -246,7 +253,7 @@ function updateRemoveButtons() {
 
 function updateCostLabel() {
   const isYears = duracionUnidadSelect.value === "anios";
-  costoLabel.textContent = isYears ? "Costo del anio" : "Costo del semestre";
+  costoLabel.textContent = isYears ? "Costo del año" : "Costo del semestre";
   costoInput.placeholder = isYears ? "Ej: 7,000,000" : "Ej: 3,500,000";
 }
 
@@ -268,7 +275,7 @@ function addChildRow() {
       <input class="child-age-start" type="number" min="0" step="0.1" placeholder="Ej: 18" />
     </label>
     <label>
-      Anios para entrar (opcional)
+      Años para entrar (opcional)
       <input class="child-time" type="number" min="0" step="0.1" placeholder="Ej: 3" />
     </label>
     <button class="remove-child" type="button">Eliminar</button>
@@ -389,7 +396,7 @@ function simulateCapital(contribution, schedule, rates, contributionMonths) {
     const withdrawal = withdrawalsByMonth.get(month) || 0;
     const aporte = month <= contributionMonths ? contribution : 0;
 
-    capital = capital * (1 + rate) + aporte - withdrawal;
+    capital = (capital + aporte) * (1 + rate) - withdrawal;
   }
 
   return capital;
@@ -434,9 +441,110 @@ function computeContributionForGoal(goal, rate, contributionMonths, monthsWithou
 
   const accumulated = (Math.pow(1 + rate, contributionMonths) - 1) / rate;
   const growth = Math.pow(1 + rate, monthsWithoutContribution);
-  const factor = accumulated * growth;
+  const factor = accumulated * growth * (1 + rate);
 
   return factor > 0 ? goal / factor : 0;
+}
+
+function buildTotalTimeline(contribution, schedule, rates, contributionMonths, mode) {
+  const rows = [];
+
+  if (mode === "projection") {
+    const { withdrawalsByMonth, firstMonth, lastMonth } = schedule;
+    const { rateBefore, rateAfter } = rates;
+
+    let capitalSin = 0;
+    let capitalCon = 0;
+
+    for (let month = 1; month <= lastMonth; month += 1) {
+      const rate = month < firstMonth ? rateBefore : rateAfter;
+      const withdrawal = withdrawalsByMonth.get(month) || 0;
+      const aporte = month <= contributionMonths ? contribution : 0;
+
+      capitalSin = capitalSin + aporte - withdrawal;
+      capitalCon = (capitalCon + aporte) * (1 + rate) - withdrawal;
+
+      rows.push({
+        period: month,
+        aporte,
+        withdrawal,
+        capitalSin,
+        capitalCon,
+      });
+    }
+
+    return rows;
+  }
+
+  const totalMonths = Math.max(0, schedule.firstMonth - 1);
+  const rate = rates.rateBefore;
+
+  let capitalSin = 0;
+  let capitalCon = 0;
+
+  for (let month = 1; month <= totalMonths; month += 1) {
+    const aporte = month <= contributionMonths ? contribution : 0;
+    capitalSin = capitalSin + aporte;
+    capitalCon = (capitalCon + aporte) * (1 + rate);
+
+    rows.push({
+      period: month,
+      aporte,
+      withdrawal: 0,
+      capitalSin,
+      capitalCon,
+    });
+  }
+
+  return rows;
+}
+
+function renderMonthlyTotalRows(rows) {
+  rows.forEach((rowData) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${rowData.period}</td>
+      <td>${formatMoney(rowData.aporte)}</td>
+      <td>${formatMoney(rowData.withdrawal)}</td>
+      <td>${formatMoney(rowData.capitalSin)}</td>
+      <td>${formatMoney(rowData.capitalCon)}</td>
+    `;
+    tablaTotalBody.appendChild(row);
+  });
+}
+
+function renderAnnualTotalRows(rows) {
+  const annualRows = new Map();
+
+  rows.forEach((rowData) => {
+    const year = Math.ceil(rowData.period / 12);
+    const current = annualRows.get(year) || {
+      period: year,
+      aporte: 0,
+      withdrawal: 0,
+      capitalSin: 0,
+      capitalCon: 0,
+    };
+
+    current.aporte += rowData.aporte;
+    current.withdrawal += rowData.withdrawal;
+    current.capitalSin = rowData.capitalSin;
+    current.capitalCon = rowData.capitalCon;
+
+    annualRows.set(year, current);
+  });
+
+  Array.from(annualRows.values()).forEach((rowData) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${rowData.period}</td>
+      <td>${formatMoney(rowData.aporte)}</td>
+      <td>${formatMoney(rowData.withdrawal)}</td>
+      <td>${formatMoney(rowData.capitalSin)}</td>
+      <td>${formatMoney(rowData.capitalCon)}</td>
+    `;
+    tablaTotalBody.appendChild(row);
+  });
 }
 
 function renderChildTables(childSummaries, options) {
@@ -446,7 +554,7 @@ function renderChildTables(childSummaries, options) {
     const block = document.createElement("div");
     block.className = "table-block";
 
-    const summary = `Inicio en ${child.timeYears} anios (${child.monthsToStart} meses).`;
+    const summary = `Inicio en ${child.timeYears} años (${child.monthsToStart} meses).`;
 
     const title = document.createElement("h3");
     title.textContent = child.name;
@@ -465,7 +573,7 @@ function renderChildTables(childSummaries, options) {
       table.innerHTML = `
         <thead>
           <tr>
-            <th>Anio</th>
+            <th>Año</th>
             <th>Semestres</th>
             <th>Retiro anual estimado</th>
           </tr>
@@ -492,61 +600,23 @@ function renderChildTables(childSummaries, options) {
   });
 }
 
-function renderTotalTable(contribution, schedule, rates, contributionMonths, mode) {
+function renderTotalTable(contribution, schedule, rates, contributionMonths, mode, tableView) {
   tablaTotalBody.innerHTML = "";
+  const rows = buildTotalTimeline(contribution, schedule, rates, contributionMonths, mode);
 
-  if (mode === "projection") {
-    const { withdrawalsByMonth, firstMonth, lastMonth } = schedule;
-    const { rateBefore, rateAfter } = rates;
-
-    let capitalSin = 0;
-    let capitalCon = 0;
-
-    for (let month = 1; month <= lastMonth; month += 1) {
-      const rate = month < firstMonth ? rateBefore : rateAfter;
-      const withdrawal = withdrawalsByMonth.get(month) || 0;
-      const aporte = month <= contributionMonths ? contribution : 0;
-
-      capitalSin = capitalSin + aporte - withdrawal;
-      capitalCon = capitalCon * (1 + rate) + aporte - withdrawal;
-
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${month}</td>
-        <td>${formatMoney(aporte)}</td>
-        <td>${formatMoney(withdrawal)}</td>
-        <td>${formatMoney(capitalSin)}</td>
-        <td>${formatMoney(capitalCon)}</td>
-      `;
-      tablaTotalBody.appendChild(row);
-    }
+  if (tableView === "anual") {
+    tablaPeriodoHead.textContent = "Año";
+    renderAnnualTotalRows(rows);
     return;
   }
 
-  const totalMonths = Math.max(0, schedule.firstMonth - 1);
-  const rate = rates.rateBefore;
-
-  let capitalSin = 0;
-  let capitalCon = 0;
-
-  for (let month = 1; month <= totalMonths; month += 1) {
-    const aporte = month <= contributionMonths ? contribution : 0;
-    capitalSin = capitalSin + aporte;
-    capitalCon = capitalCon * (1 + rate) + aporte;
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${month}</td>
-      <td>${formatMoney(aporte)}</td>
-      <td>${formatMoney(0)}</td>
-      <td>${formatMoney(capitalSin)}</td>
-      <td>${formatMoney(capitalCon)}</td>
-    `;
-    tablaTotalBody.appendChild(row);
-  }
+  tablaPeriodoHead.textContent = "Mes";
+  renderMonthlyTotalRows(rows);
 }
 
 function calculate() {
+  updatePeriodHeader();
+
   const costoBase = parseMoneyInput(costoInput.value);
   const duracion = Number(duracionInput.value);
   const duracionUnidad = duracionUnidadSelect.value;
@@ -639,7 +709,7 @@ function calculate() {
 
   if (Number.isFinite(aniosAporte) && aniosAporte > 0 && aniosAporte > maxAporteYears) {
     aporteWarningEl.textContent =
-      `Los anos de aporte no pueden ser mayores que los anos hasta el primer hijo (${maxAporteYears.toFixed(1)}).`;
+      `Los años de aporte no pueden ser mayores que los años hasta el primer hijo (${maxAporteYears.toFixed(1)}).`;
     aporteWarningEl.hidden = false;
   } else {
     aporteWarningEl.hidden = true;
@@ -649,6 +719,7 @@ function calculate() {
     rateBefore: aggressiveRate,
     rateAfter: conservativeRate,
   };
+  const tableView = tablaVistaInput ? tablaVistaInput.value : "mensual";
 
   let contribution = 0;
   let totalAportado = 0;
@@ -709,7 +780,7 @@ function calculate() {
 
   if (tableMode === "projection") {
     tablaTotalResumen.textContent =
-      `Aporte constante hasta el primer retiro (mes ${switchMonth}, ~${switchYears} anios). ` +
+      `Aporte constante hasta el primer retiro (mes ${switchMonth}, ~${switchYears} años). ` +
       `Luego se detienen aportes y se usa rentabilidad conservadora.`;
   } else {
     tablaTotalResumen.textContent =
@@ -719,7 +790,7 @@ function calculate() {
   renderChildTables(schedule.childSummaries, {
     showWithdrawals: proyectarRetirosInput.checked,
   });
-  renderTotalTable(contribution, schedule, rates, contributionMonths, tableMode);
+  renderTotalTable(contribution, schedule, rates, contributionMonths, tableMode, tableView);
 }
 
 childrenList.addEventListener("click", (event) => {
@@ -772,9 +843,16 @@ monedaSelect.addEventListener("change", () => {
   }
 });
 
+if (tablaVistaInput) {
+  tablaVistaInput.addEventListener("change", () => {
+    calculate();
+  });
+}
+
 async function init() {
   addChildRow();
   updateCostLabel();
+  updatePeriodHeader();
   setupMoneyInputs();
   trmData = await fetchTRM();
   updateTrmUI();

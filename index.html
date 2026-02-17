@@ -66,7 +66,7 @@
                 Unidad de duracion
                 <select id="duracion-unidad">
                   <option value="semestres">Semestres</option>
-                  <option value="anios">Anios</option>
+                  <option value="anios">Años</option>
                 </select>
               </label>
 
@@ -86,7 +86,7 @@
               </label>
 
               <label>
-                Anios de aporte (opcional)
+                Años de aporte (opcional)
                 <input id="anios-aporte" type="number" min="0" step="0.1" placeholder="Ej: 5" />
               </label>
               <p class="warning" id="aporte-warning" hidden></p>
@@ -95,7 +95,7 @@
             <div class="form-inline">
               <label class="check-row">
                 <input id="proyectar-retiros" type="checkbox" />
-                Proyectar retiros por anio durante el estudio
+                Proyectar retiros por año durante el estudio
               </label>
             </div>
 
@@ -111,7 +111,7 @@
           </form>
           <p class="note">
             La rentabilidad y la inflacion se convierten a tasa mensual efectiva. Si no
-            ingresas los anos para entrar, se calcula con la edad actual y la edad de ingreso.
+            ingresas los años para entrar, se calcula con la edad actual y la edad de ingreso.
           </p>
         </section>
 
@@ -135,7 +135,7 @@
               <p class="value" id="ahorro-anual-usd">US$0.00</p>
             </div>
             <div>
-              <p class="label">Anios de aporte</p>
+              <p class="label">Años de aporte</p>
               <p class="value" id="anios-aporte-res">0</p>
             </div>
             <div>
@@ -173,14 +173,23 @@
 
       <section class="card table-card">
         <div class="table-head">
-          <h2>Tabla total del ahorro</h2>
+          <div class="table-head-row">
+            <h2>Tabla total del ahorro</h2>
+            <label class="table-view-label">
+              Ver tabla
+              <select id="tabla-vista">
+                <option value="mensual">Mensual</option>
+                <option value="anual">Anual</option>
+              </select>
+            </label>
+          </div>
           <div class="table-summary" id="tabla-total-resumen">Ingresa los datos para ver la tabla total.</div>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Mes</th>
+                <th id="tabla-periodo-head">Mes</th>
                 <th>Aporte</th>
                 <th>Retiro total</th>
                 <th>Capital sin rendimientos</th>
