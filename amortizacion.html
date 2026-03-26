@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculadora de Amortización</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <nav class="top-nav">
+        <div class="nav-left">
+          <a class="nav-logo" href="index.html">Fides Financial</a>
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Universidad</a>
+          <a href="pension.html">Pension</a>
+          <a class="active" href="amortizacion.html">Amortización</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="brand">
+          <img class="logo" src="logo.png" alt="Fides Financial" />
+        </div>
+        <p class="eyebrow">Simulador de crédito</p>
+        <h1>Tabla de amortización con y sin abonos</h1>
+        <p class="lead">
+          Compara cuotas fijas y amortización constante, y estima el ahorro por abonos
+          extraordinarios aplicando reducción de plazo o de cuota.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Parámetros del crédito</h2>
+          <form id="amort-form" autocomplete="off">
+            <div class="form-grid">
+              <label>
+                Monto del crédito
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input
+                    id="monto-amort"
+                    class="money-input"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="Ej: 150,000,000"
+                  />
+                </div>
+              </label>
+
+              <label>
+                Tasa efectiva anual (%)
+                <input id="tasa-amort" type="number" min="0" step="0.01" placeholder="Ej: 16" />
+              </label>
+
+              <label>
+                Plazo
+                <input id="plazo-amort" type="number" min="1" step="1" placeholder="Ej: 15" />
+              </label>
+
+              <label>
+                Unidad de plazo
+                <select id="plazo-unidad">
+                  <option value="anios">Años</option>
+                  <option value="meses">Meses</option>
+                </select>
+              </label>
+
+              <label>
+                Método de amortización
+                <select id="metodo-amort">
+                  <option value="fija">Cuotas fijas (Francés)</option>
+                  <option value="constante">Amortización constante</option>
+                </select>
+              </label>
+
+              <label>
+                Estrategia de abono a capital
+                <select id="estrategia-abono">
+                  <option value="plazo">Disminuir plazo (más común)</option>
+                  <option value="cuota">Disminuir cuota</option>
+                </select>
+              </label>
+
+              <label>
+                Abono extraordinario por evento
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input
+                    id="abono-extra"
+                    class="money-input"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="Ej: 500,000"
+                  />
+                </div>
+              </label>
+
+              <label>
+                Frecuencia del abono (cada X meses)
+                <input id="abono-cada" type="number" min="1" step="1" value="1" />
+              </label>
+
+              <label>
+                Iniciar abonos desde el mes
+                <input id="abono-inicio" type="number" min="1" step="1" value="1" />
+              </label>
+            </div>
+
+            <button type="button" id="calcular-amort">Calcular</button>
+          </form>
+          <p class="note">
+            Por defecto se usa cuotas fijas y reducción de plazo, que suele ser la
+            opción más frecuente en créditos bancarios para ahorrar intereses.
+          </p>
+        </section>
+
+        <section class="card result-card">
+          <h2>Resultados</h2>
+          <div class="result-grid">
+            <div>
+              <p class="label">Cuota inicial sin abonos</p>
+              <p class="value" id="cuota-base">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Cuota inicial con abonos</p>
+              <p class="value" id="cuota-con">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Intereses totales sin abonos</p>
+              <p class="value" id="interes-base">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Intereses totales con abonos</p>
+              <p class="value" id="interes-con">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Ahorro en intereses</p>
+              <p class="value" id="ahorro-interes">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Plazo sin abonos</p>
+              <p class="value" id="plazo-base">0 meses</p>
+            </div>
+            <div>
+              <p class="label">Plazo con abonos</p>
+              <p class="value" id="plazo-con">0 meses</p>
+            </div>
+            <div>
+              <p class="label">Reducción de plazo</p>
+              <p class="value" id="ahorro-plazo">0 meses</p>
+            </div>
+            <div>
+              <p class="label">Total pagado sin abonos</p>
+              <p class="value" id="total-base">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Total pagado con abonos</p>
+              <p class="value" id="total-con">$0,00</p>
+            </div>
+          </div>
+          <p class="note" id="amort-note">Ingresa los datos para calcular la tabla.</p>
+        </section>
+      </main>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <h2>Tabla de amortización (con abonos)</h2>
+          <div class="table-summary" id="tabla-amort-resumen">Ingresa los datos para ver la tabla.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>Cuota</th>
+                <th>Interés</th>
+                <th>Abono capital</th>
+                <th>Abono extra</th>
+                <th>Pago total</th>
+                <th>Saldo</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-amort-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="amortizacion.js"></script>
+  </body>
+</html>
