@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
@@ -84,6 +84,11 @@
                 </select>
               </label>
 
+              <label class="check-row">
+                <input id="mantener-pago-total" type="checkbox" />
+                En disminución de cuota, mantener pago total (cuota + abono) constante
+              </label>
+
               <label>
                 Abono extraordinario por evento
                 <div class="input-row">
@@ -167,7 +172,10 @@
 
       <section class="card table-card">
         <div class="table-head">
-          <h2>Tabla de amortización (con abonos)</h2>
+          <div class="table-head-row">
+            <h2>Tabla de amortización (con abonos)</h2>
+            <button class="ghost" type="button" id="reset-abonos-tabla">Limpiar abonos de tabla</button>
+          </div>
           <div class="table-summary" id="tabla-amort-resumen">Ingresa los datos para ver la tabla.</div>
         </div>
         <div class="table-wrap">
@@ -178,7 +186,7 @@
                 <th>Cuota</th>
                 <th>Interés</th>
                 <th>Abono capital</th>
-                <th>Abono extra</th>
+                <th>Abono extra (editable)</th>
                 <th>Pago total</th>
                 <th>Saldo</th>
               </tr>

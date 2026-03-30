@@ -322,6 +322,12 @@ button:hover {
   min-width: 620px;
 }
 
+.inline-money-input {
+  min-width: 120px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+}
+
 thead {
   background: rgba(15, 107, 92, 0.07);
   position: sticky;
