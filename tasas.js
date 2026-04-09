@@ -14,6 +14,7 @@ const rateTypes = [
   { code: "em", label: "Efectiva mensual (E.M.)", kind: "effective", m: 12 },
   { code: "etv", label: "Efectiva trimestral (E.T.V.)", kind: "effective", m: 4 },
   { code: "esv", label: "Efectiva semestral (E.S.V.)", kind: "effective", m: 2 },
+  { code: "nmv", label: "Nominal mensual vencida (N.M.V.)", kind: "nominal", m: 1 },
   { code: "namv", label: "Nominal anual mes vencido (N.A.M.V.)", kind: "nominal", m: 12 },
   { code: "natv", label: "Nominal anual trimestre vencido (N.A.T.V.)", kind: "nominal", m: 4 },
   { code: "nasv", label: "Nominal anual semestre vencido (N.A.S.V.)", kind: "nominal", m: 2 },
