@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Convertidor de Tasas</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <nav class="top-nav">
+        <div class="nav-left">
+          <a class="nav-logo" href="index.html">Fides Financial</a>
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Universidad</a>
+          <a href="pension.html">Pension</a>
+          <a href="amortizacion.html">Amortización</a>
+          <a class="active" href="tasas.html">Tasas</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="brand">
+          <img class="logo" src="logo.png" alt="Fides Financial" />
+        </div>
+        <p class="eyebrow">Herramienta financiera</p>
+        <h1>Convertidor de tasas de interés</h1>
+        <p class="lead">
+          Convierte entre tasas efectivas y nominales de forma rápida y valida
+          equivalencias para tus cálculos de ahorro, crédito y retiro.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Datos de entrada</h2>
+          <form id="tasas-form" autocomplete="off">
+            <div class="form-grid">
+              <label>
+                Tasa origen (%)
+                <input id="tasa-valor" type="number" min="0" step="0.0001" placeholder="Ej: 16.5" />
+              </label>
+
+              <label>
+                Tipo de tasa origen
+                <select id="tasa-origen"></select>
+              </label>
+
+              <label>
+                Convertir a
+                <select id="tasa-destino"></select>
+              </label>
+            </div>
+
+            <button type="button" id="convertir-tasa">Convertir</button>
+          </form>
+          <p class="note">
+            Supuesto: tasas vencidas con equivalencia financiera estándar.
+          </p>
+        </section>
+
+        <section class="card result-card">
+          <h2>Resultado</h2>
+          <div class="result-grid">
+            <div>
+              <p class="label">Tasa convertida</p>
+              <p class="value" id="tasa-resultado">0,0000%</p>
+            </div>
+            <div>
+              <p class="label">Equivalente E.A.</p>
+              <p class="value" id="tasa-ea">0,0000%</p>
+            </div>
+          </div>
+          <p class="note" id="tasas-note">Ingresa una tasa para convertir.</p>
+        </section>
+      </main>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <h2>Equivalencias</h2>
+          <div class="table-summary" id="tabla-tasas-resumen">
+            Se muestran las equivalencias de la tasa ingresada.
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Tasa equivalente</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-tasas-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="tasas.js"></script>
+  </body>
+</html>
