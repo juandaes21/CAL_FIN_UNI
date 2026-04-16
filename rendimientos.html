@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculadora de Rendimientos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <nav class="top-nav">
+        <div class="nav-left">
+          <a class="nav-logo" href="index.html">Fides Financial</a>
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Universidad</a>
+          <a href="pension.html">Pension</a>
+          <a href="amortizacion.html">Amortizacion</a>
+          <a href="tasas.html">Tasas</a>
+          <a class="active" href="rendimientos.html">Rendimientos</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="brand">
+          <img class="logo" src="logo.png" alt="Fides Financial" />
+        </div>
+        <p class="eyebrow">Ahorro e inversion</p>
+        <h1>Calculadora de cuentas de alta rentabilidad por dias</h1>
+        <p class="lead">
+          Proyecta saldo e intereses con capitalizacion diaria. En este calculo se
+          omiten inflacion y retenciones.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Parametros</h2>
+          <form id="rend-form" autocomplete="off">
+            <div class="form-grid">
+              <label>
+                Monto inicial
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input
+                    id="monto-inicial"
+                    class="money-input"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="Ej: 5,000,000"
+                  />
+                </div>
+              </label>
+
+              <label>
+                Aporte diario
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input
+                    id="aporte-diario"
+                    class="money-input"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="Ej: 50,000"
+                  />
+                </div>
+              </label>
+
+              <label>
+                Tasa efectiva anual (%)
+                <input id="tasa-ea" type="number" min="0" step="0.0001" placeholder="Ej: 12" />
+              </label>
+
+              <label>
+                Plazo (dias)
+                <input id="plazo-dias" type="number" min="1" step="1" placeholder="Ej: 365" />
+              </label>
+
+              <label>
+                Vista de tabla
+                <select id="vista-tabla-rend">
+                  <option value="diaria">Diaria</option>
+                  <option value="mensual">Mensual (cada 30 dias)</option>
+                </select>
+              </label>
+            </div>
+
+            <button type="button" id="calcular-rend">Calcular</button>
+          </form>
+          <p class="note">
+            Supuesto: aporte al inicio del dia y rendimiento al cierre del dia.
+          </p>
+        </section>
+
+        <section class="card result-card">
+          <h2>Resultados</h2>
+          <div class="result-grid">
+            <div>
+              <p class="label">Saldo final</p>
+              <p class="value" id="saldo-final-rend">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Total aportado</p>
+              <p class="value" id="total-aportado-rend">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Intereses generados</p>
+              <p class="value" id="interes-rend">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Tasa efectiva diaria</p>
+              <p class="value" id="tasa-diaria-rend">0,0000%</p>
+            </div>
+          </div>
+          <p class="note" id="rend-note">Ingresa datos para calcular.</p>
+        </section>
+      </main>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <h2>Tabla de comportamiento</h2>
+          <div class="table-summary" id="tabla-rend-resumen">Ingresa los datos para ver la tabla.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th id="col-periodo-rend">Dia</th>
+                <th>Aporte</th>
+                <th>Interes del periodo</th>
+                <th>Saldo</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-rend-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="rendimientos.js"></script>
+  </body>
+</html>
