@@ -10,6 +10,7 @@ const abonoCadaInput = document.getElementById("abono-cada");
 const abonoInicioInput = document.getElementById("abono-inicio");
 const btnCalcular = document.getElementById("calcular-amort");
 const resetAbonosTablaBtn = document.getElementById("reset-abonos-tabla");
+const btnDescargarPdf = document.getElementById("descargar-amort-pdf");
 
 const cuotaBaseEl = document.getElementById("cuota-base");
 const cuotaConEl = document.getElementById("cuota-con");
@@ -500,9 +501,80 @@ function handleTableExtraChange(event) {
   calculate();
 }
 
+function buildTableRowsFromTbody(tbody) {
+  return Array.from(tbody.querySelectorAll("tr")).map((tr) =>
+    Array.from(tr.querySelectorAll("td")).map((td) => {
+      const input = td.querySelector("input");
+      return input ? (input.value.trim() || "0") : td.textContent.trim();
+    })
+  );
+}
+
+function downloadAmortizacionPdf() {
+  if (!tablaBodyEl.children.length) {
+    noteEl.textContent = "Primero calcula el escenario para descargar el PDF.";
+    return;
+  }
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    noteEl.textContent =
+      "No se pudo cargar el generador de PDF. Revisa tu conexion e intenta de nuevo.";
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const generatedAt = new Date().toLocaleString("es-CO");
+
+  doc.setFontSize(14);
+  doc.text("Fides Financial - Reporte Amortizacion", 14, 16);
+  doc.setFontSize(10);
+  doc.text(`Fecha de generacion: ${generatedAt}`, 14, 23);
+
+  const summaryRows = [
+    ["Cuota inicial sin abonos", cuotaBaseEl.textContent.trim()],
+    ["Cuota inicial con abonos", cuotaConEl.textContent.trim()],
+    ["Intereses totales sin abonos", interesBaseEl.textContent.trim()],
+    ["Intereses totales con abonos", interesConEl.textContent.trim()],
+    ["Ahorro en intereses", ahorroInteresEl.textContent.trim()],
+    ["Plazo sin abonos", plazoBaseEl.textContent.trim()],
+    ["Plazo con abonos", plazoConEl.textContent.trim()],
+    ["Reduccion de plazo", ahorroPlazoEl.textContent.trim()],
+    ["Total pagado sin abonos", totalBaseEl.textContent.trim()],
+    ["Total pagado con abonos", totalConEl.textContent.trim()],
+  ];
+
+  doc.autoTable({
+    startY: 30,
+    head: [["Indicador", "Valor"]],
+    body: summaryRows,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
+  const tableHead = Array.from(
+    document.querySelectorAll("section.card.table-card thead th")
+  ).map((th) => th.textContent.trim());
+  const tableRows = buildTableRowsFromTbody(tablaBodyEl);
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 8,
+    head: [tableHead],
+    body: tableRows,
+    styles: { fontSize: 7 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
+  const fileDate = new Date().toISOString().slice(0, 10);
+  doc.save(`reporte-amortizacion-${fileDate}.pdf`);
+}
+
 btnCalcular.addEventListener("click", () => {
   calculate();
 });
+if (btnDescargarPdf) {
+  btnDescargarPdf.addEventListener("click", downloadAmortizacionPdf);
+}
 
 if (resetAbonosTablaBtn) {
   resetAbonosTablaBtn.addEventListener("click", () => {

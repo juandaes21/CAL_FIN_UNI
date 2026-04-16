@@ -244,6 +244,10 @@ button:hover {
   transform: translateY(-1px);
 }
 
+.download-pdf-btn {
+  margin-top: 12px;
+}
+
 .note {
   font-size: 0.9rem;
   color: var(--muted);

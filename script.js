@@ -12,6 +12,7 @@ const proyectarRetirosInput = document.getElementById("proyectar-retiros");
 const addChildBtn = document.getElementById("add-child");
 const childrenList = document.getElementById("children-list");
 const btn = document.getElementById("calcular");
+const btnDescargarPdf = document.getElementById("descargar-universidad-pdf");
 
 const ahorroMensualEl = document.getElementById("ahorro-mensual");
 const ahorroMensualUsdEl = document.getElementById("ahorro-mensual-usd");
@@ -793,6 +794,92 @@ function calculate() {
   renderTotalTable(contribution, schedule, rates, contributionMonths, tableMode, tableView);
 }
 
+function buildTableRowsFromTbody(tbody) {
+  return Array.from(tbody.querySelectorAll("tr")).map((tr) =>
+    Array.from(tr.querySelectorAll("td")).map((td) => td.textContent.trim())
+  );
+}
+
+function downloadUniversityPdf() {
+  if (!tablaTotalBody.children.length) {
+    tablaTotalResumen.textContent = "Primero calcula el escenario para descargar el PDF.";
+    return;
+  }
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    tablaTotalResumen.textContent =
+      "No se pudo cargar el generador de PDF. Revisa tu conexion e intenta de nuevo.";
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const generatedAt = new Date().toLocaleString("es-CO");
+
+  doc.setFontSize(14);
+  doc.text("Fides Financial - Reporte Universidad", 14, 16);
+  doc.setFontSize(10);
+  doc.text(`Fecha de generacion: ${generatedAt}`, 14, 23);
+
+  const summaryRows = [
+    ["Ahorro mensual total (COP)", ahorroMensualEl.textContent.trim()],
+    ["Ahorro mensual total (USD)", ahorroMensualUsdEl.textContent.trim()],
+    ["Ahorro anual total (COP)", ahorroAnualEl.textContent.trim()],
+    ["Ahorro anual total (USD)", ahorroAnualUsdEl.textContent.trim()],
+    ["Anios de aporte", aniosAporteResEl.textContent.trim()],
+    ["Total aportado (COP)", totalAportadoEl.textContent.trim()],
+    ["Total aportado (USD)", totalAportadoUsdEl.textContent.trim()],
+    [montoLabelEl.textContent.trim(), montoTotalEl.textContent.trim()],
+    [montoLabelUsdEl.textContent.trim(), montoTotalUsdEl.textContent.trim()],
+    ["TRM actual (COP/USD)", trmValorEl.textContent.trim()],
+  ];
+
+  doc.autoTable({
+    startY: 30,
+    head: [["Indicador", "Valor"]],
+    body: summaryRows,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
+  const totalHead = Array.from(
+    document.querySelectorAll("section.card.table-card:last-of-type thead th")
+  ).map((th) => th.textContent.trim());
+  const totalRows = buildTableRowsFromTbody(tablaTotalBody);
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 8,
+    head: [totalHead],
+    body: totalRows,
+    styles: { fontSize: 7 },
+    headStyles: { fillColor: [60, 106, 157] },
+    didDrawPage: (data) => {
+      if (data.pageNumber === 1) return;
+      doc.setFontSize(10);
+      doc.text("Fides Financial - Reporte Universidad", 14, 12);
+    },
+  });
+
+  const childBlocks = Array.from(tablasHijos.querySelectorAll(".table-block"));
+  childBlocks.forEach((block) => {
+    const childName = block.querySelector("h3")?.textContent?.trim() || "Hijo";
+    const childSummary = block.querySelector("p")?.textContent?.trim() || "";
+    const childTable = block.querySelector("tbody");
+    const childRows = childTable ? buildTableRowsFromTbody(childTable) : [];
+
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 8,
+      head: [[`${childName} - ${childSummary}`, "", ""]],
+      body: childRows.length ? childRows : [["Sin detalle anual de retiros", "", ""]],
+      styles: { fontSize: 7 },
+      headStyles: { fillColor: [60, 106, 157] },
+    });
+  });
+
+  const fileDate = new Date().toISOString().slice(0, 10);
+  doc.save(`reporte-universidad-${fileDate}.pdf`);
+}
+
 childrenList.addEventListener("click", (event) => {
   if (event.target.matches(".remove-child")) {
     event.target.closest(".child-row").remove();
@@ -808,6 +895,9 @@ childrenList.addEventListener("input", () => {
 });
 
 btn.addEventListener("click", calculate);
+if (btnDescargarPdf) {
+  btnDescargarPdf.addEventListener("click", downloadUniversityPdf);
+}
 addChildBtn.addEventListener("click", () => {
   addChildRow();
 });

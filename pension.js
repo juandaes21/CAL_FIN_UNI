@@ -10,6 +10,7 @@ const inflacionInput = document.getElementById("inflacion-pension");
 const conservadorInput = document.getElementById("conservador-pension");
 const frecuenciaInput = document.getElementById("frecuencia");
 const btn = document.getElementById("calcular-pension");
+const btnDescargarPdf = document.getElementById("descargar-pension-pdf");
 
 const aporteLabelEl = document.getElementById("aporte-label");
 const aporteEl = document.getElementById("aporte-requerido");
@@ -521,7 +522,77 @@ function calculate() {
   }
 }
 
+function buildTableRowsFromTbody(tbody) {
+  return Array.from(tbody.querySelectorAll("tr")).map((tr) =>
+    Array.from(tr.querySelectorAll("td")).map((td) => td.textContent.trim())
+  );
+}
+
+function downloadPensionPdf() {
+  if (!tablaBody.children.length) {
+    pensionNoteEl.textContent = "Primero calcula el escenario para descargar el PDF.";
+    return;
+  }
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    pensionNoteEl.textContent =
+      "No se pudo cargar el generador de PDF. Revisa tu conexion e intenta de nuevo.";
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const generatedAt = new Date().toLocaleString("es-CO");
+
+  doc.setFontSize(14);
+  doc.text("Fides Financial - Reporte Pension", 14, 16);
+  doc.setFontSize(10);
+  doc.text(`Fecha de generacion: ${generatedAt}`, 14, 23);
+
+  const summaryRows = [
+    [aporteLabelEl.textContent.trim(), aporteEl.textContent.trim()],
+    ["Aporte requerido (USD)", aporteUsdEl.textContent.trim()],
+    ["Ingreso ajustado (COP)", ingresoAjustadoEl.textContent.trim()],
+    ["Ingreso ajustado (USD)", ingresoAjustadoUsdEl.textContent.trim()],
+    ["Capital requerido (COP)", capitalRequeridoEl.textContent.trim()],
+    ["Capital requerido (USD)", capitalRequeridoUsdEl.textContent.trim()],
+    ["Total aportado (COP)", totalAportadoEl.textContent.trim()],
+    ["Total aportado (USD)", totalAportadoUsdEl.textContent.trim()],
+    ["Total retiros estimados (COP)", totalRetirosEl.textContent.trim()],
+    ["Total retiros estimados (USD)", totalRetirosUsdEl.textContent.trim()],
+    ["TRM actual (COP/USD)", trmValorEl.textContent.trim()],
+    ["Tasa efectiva del periodo", tasaPeriodoEl.textContent.trim()],
+  ];
+
+  doc.autoTable({
+    startY: 30,
+    head: [["Indicador", "Valor"]],
+    body: summaryRows,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
+  const tableHead = Array.from(
+    document.querySelectorAll("section.card.table-card thead th")
+  ).map((th) => th.textContent.trim());
+  const tableRows = buildTableRowsFromTbody(tablaBody);
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 8,
+    head: [tableHead],
+    body: tableRows,
+    styles: { fontSize: 7 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
+  const fileDate = new Date().toISOString().slice(0, 10);
+  doc.save(`reporte-pension-${fileDate}.pdf`);
+}
+
 btn.addEventListener("click", calculate);
+if (btnDescargarPdf) {
+  btnDescargarPdf.addEventListener("click", downloadPensionPdf);
+}
 [
   ingresoInput,
   monedaSelect,

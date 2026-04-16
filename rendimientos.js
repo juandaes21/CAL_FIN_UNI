@@ -4,6 +4,7 @@ const tasaEaInput = document.getElementById("tasa-ea");
 const plazoDiasInput = document.getElementById("plazo-dias");
 const vistaTablaInput = document.getElementById("vista-tabla-rend");
 const btnCalcular = document.getElementById("calcular-rend");
+const btnDescargarPdf = document.getElementById("descargar-rend-pdf");
 
 const saldoFinalEl = document.getElementById("saldo-final-rend");
 const totalAportadoEl = document.getElementById("total-aportado-rend");
@@ -13,6 +14,8 @@ const noteEl = document.getElementById("rend-note");
 const tablaResumenEl = document.getElementById("tabla-rend-resumen");
 const tablaBodyEl = document.getElementById("tabla-rend-body");
 const colPeriodoEl = document.getElementById("col-periodo-rend");
+
+let lastReportData = null;
 
 const moneyFmt = new Intl.NumberFormat("es-ES", {
   minimumFractionDigits: 2,
@@ -128,6 +131,7 @@ function clearResults() {
   tablaResumenEl.textContent = "Ingresa los datos para ver la tabla.";
   tablaBodyEl.innerHTML = "";
   colPeriodoEl.textContent = vistaTablaInput.value === "mensual" ? "Mes" : "Dia";
+  lastReportData = null;
 }
 
 function buildTimeline(days, initialAmount, dailyContribution, dailyRate) {
@@ -157,26 +161,7 @@ function buildTimeline(days, initialAmount, dailyContribution, dailyRate) {
   return { rows, totalContrib, totalInterest, finalBalance: balance };
 }
 
-function renderDailyRows(rows) {
-  colPeriodoEl.textContent = "Dia";
-  tablaBodyEl.innerHTML = "";
-
-  rows.forEach((rowData) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${rowData.period}</td>
-      <td>${formatMoney(rowData.contribution)}</td>
-      <td>${formatMoney(rowData.periodInterest)}</td>
-      <td>${formatMoney(rowData.balance)}</td>
-    `;
-    tablaBodyEl.appendChild(tr);
-  });
-}
-
-function renderMonthlyRows(rows) {
-  colPeriodoEl.textContent = "Mes";
-  tablaBodyEl.innerHTML = "";
-
+function buildMonthlyRows(rows) {
   const monthly = new Map();
   rows.forEach((rowData) => {
     const month = Math.ceil(rowData.period / 30);
@@ -192,7 +177,14 @@ function renderMonthlyRows(rows) {
     monthly.set(month, acc);
   });
 
-  Array.from(monthly.values()).forEach((rowData) => {
+  return Array.from(monthly.values());
+}
+
+function renderRows(rows, periodLabel) {
+  colPeriodoEl.textContent = periodLabel;
+  tablaBodyEl.innerHTML = "";
+
+  rows.forEach((rowData) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${rowData.period}</td>
@@ -237,14 +229,89 @@ function calculate() {
       : `Vista diaria de ${days} dia(s).`;
   noteEl.textContent = "Calculo sin inflacion y sin retenciones.";
 
-  if (tableView === "mensual") {
-    renderMonthlyRows(sim.rows);
-  } else {
-    renderDailyRows(sim.rows);
+  const displayRows = tableView === "mensual" ? buildMonthlyRows(sim.rows) : sim.rows;
+  const periodLabel = tableView === "mensual" ? "Mes" : "Dia";
+  renderRows(displayRows, periodLabel);
+
+  lastReportData = {
+    generatedAt: new Date(),
+    params: {
+      initialAmount,
+      dailyContribution,
+      annualRate,
+      days,
+      tableView,
+    },
+    results: {
+      finalBalance: sim.finalBalance,
+      totalContrib: sim.totalContrib,
+      totalInterest: sim.totalInterest,
+      dailyRate,
+    },
+    displayRows,
+    periodLabel,
+  };
+}
+
+function downloadPdfReport() {
+  if (!lastReportData) {
+    noteEl.textContent = "Primero calcula el escenario para poder descargar el PDF.";
+    return;
   }
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    noteEl.textContent = "No se pudo cargar el generador de PDF. Revisa tu conexion e intenta de nuevo.";
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const { generatedAt, params, results, displayRows, periodLabel } = lastReportData;
+  const dateLabel = generatedAt.toLocaleString("es-CO");
+
+  doc.setFontSize(14);
+  doc.text("Fides Financial - Reporte de Rendimientos", 14, 16);
+  doc.setFontSize(10);
+  doc.text(`Fecha de generacion: ${dateLabel}`, 14, 23);
+
+  doc.text("Parametros:", 14, 32);
+  doc.text(`Monto inicial: ${formatMoney(params.initialAmount)}`, 14, 38);
+  doc.text(`Aporte diario: ${formatMoney(params.dailyContribution)}`, 14, 44);
+  doc.text(`Tasa efectiva anual: ${formatPercent(params.annualRate)}`, 14, 50);
+  doc.text(`Plazo: ${params.days} dias`, 14, 56);
+  doc.text(`Vista tabla: ${params.tableView === "mensual" ? "Mensual (30 dias)" : "Diaria"}`, 14, 62);
+
+  doc.text("Resultados:", 14, 72);
+  doc.text(`Saldo final: ${formatMoney(results.finalBalance)}`, 14, 78);
+  doc.text(`Total aportado: ${formatMoney(results.totalContrib)}`, 14, 84);
+  doc.text(`Intereses generados: ${formatMoney(results.totalInterest)}`, 14, 90);
+  doc.text(`Tasa efectiva diaria: ${formatPercent(results.dailyRate * 100)}`, 14, 96);
+
+  const tableHead = [[periodLabel, "Aporte", "Interes del periodo", "Saldo"]];
+  const tableBody = displayRows.map((rowData) => [
+    String(rowData.period),
+    formatMoney(rowData.contribution),
+    formatMoney(rowData.periodInterest),
+    formatMoney(rowData.balance),
+  ]);
+
+  doc.autoTable({
+    startY: 104,
+    head: tableHead,
+    body: tableBody,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
+  const filename = `reporte-rendimientos-${generatedAt.toISOString().slice(0, 10)}.pdf`;
+  doc.save(filename);
 }
 
 btnCalcular.addEventListener("click", calculate);
+if (btnDescargarPdf) {
+  btnDescargarPdf.addEventListener("click", downloadPdfReport);
+}
 
 [
   montoInicialInput,
