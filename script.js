@@ -800,6 +800,38 @@ function buildTableRowsFromTbody(tbody) {
   );
 }
 
+function getUniversityParameterRows() {
+  const durationUnit = duracionUnidadSelect.value === "anios" ? "Años" : "Semestres";
+  const projectionMode = proyectarRetirosInput.checked
+    ? "Proyectar retiros durante el estudio"
+    : "Meta al inicio del primer hijo";
+  const tableView = tablaVistaInput && tablaVistaInput.value === "anual" ? "Anual" : "Mensual";
+
+  const rows = [
+    ["Objetivo", "Ahorro para financiar estudio universitario de los hijos"],
+    ["Moneda de calculo", monedaSelect.value],
+    ["Costo ingresado", costoInput.value ? `$${costoInput.value}` : "-"],
+    ["Duracion del programa", `${duracionInput.value || "-"} ${durationUnit}`],
+    ["Rentabilidad anual esperada", `${rentInput.value || "0"}%`],
+    ["Inflacion anual promedio", `${inflacionInput.value || "0"}%`],
+    ["Rentabilidad conservadora sobre inflacion", `${conservadorInput.value || "0"}%`],
+    ["Años de aporte", aniosAporteInput.value || "Automatico hasta primer retiro"],
+    ["Modo de calculo", projectionMode],
+    ["Vista de tabla", tableView],
+  ];
+
+  const childRows = Array.from(childrenList.querySelectorAll(".child-row"));
+  childRows.forEach((row, index) => {
+    const name = row.querySelector(".child-name")?.value?.trim() || `Hijo ${index + 1}`;
+    const age = row.querySelector(".child-age")?.value || "-";
+    const startAge = row.querySelector(".child-age-start")?.value || "-";
+    const yearsToStart = row.querySelector(".child-time")?.value || "Calculado por edades";
+    rows.push([`Datos ${name}`, `Edad actual: ${age}, ingreso: ${startAge}, años para entrar: ${yearsToStart}`]);
+  });
+
+  return rows;
+}
+
 function downloadUniversityPdf() {
   if (!tablaTotalBody.children.length) {
     tablaTotalResumen.textContent = "Primero calcula el escenario para descargar el PDF.";
@@ -821,6 +853,15 @@ function downloadUniversityPdf() {
   doc.setFontSize(10);
   doc.text(`Fecha de generacion: ${generatedAt}`, 14, 23);
 
+  const parameterRows = getUniversityParameterRows();
+  doc.autoTable({
+    startY: 30,
+    head: [["Parametro del cliente", "Valor"]],
+    body: parameterRows,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
   const summaryRows = [
     ["Ahorro mensual total (COP)", ahorroMensualEl.textContent.trim()],
     ["Ahorro mensual total (USD)", ahorroMensualUsdEl.textContent.trim()],
@@ -835,7 +876,7 @@ function downloadUniversityPdf() {
   ];
 
   doc.autoTable({
-    startY: 30,
+    startY: doc.lastAutoTable.finalY + 8,
     head: [["Indicador", "Valor"]],
     body: summaryRows,
     styles: { fontSize: 8 },

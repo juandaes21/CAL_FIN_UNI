@@ -510,6 +510,26 @@ function buildTableRowsFromTbody(tbody) {
   );
 }
 
+function getAmortizacionParameterRows() {
+  const plazoUnidad = plazoUnidadInput.value === "anios" ? "Años" : "Meses";
+  const metodo = metodoInput.value === "fija" ? "Cuotas fijas (Frances)" : "Amortizacion constante";
+  const estrategia = estrategiaInput.value === "plazo" ? "Disminuir plazo" : "Disminuir cuota";
+  const mantenerPago = mantenerPagoTotalInput.checked ? "Si" : "No";
+
+  return [
+    ["Objetivo", "Reducir costo financiero de un credito con y sin abonos"],
+    ["Monto del credito", montoInput.value ? `$${montoInput.value}` : "-"],
+    ["Tasa efectiva anual", `${tasaInput.value || "0"}%`],
+    ["Plazo", `${plazoInput.value || "-"} ${plazoUnidad}`],
+    ["Metodo de amortizacion", metodo],
+    ["Estrategia de abono", estrategia],
+    ["Mantener pago total en disminucion de cuota", mantenerPago],
+    ["Abono extraordinario base", abonoExtraInput.value ? `$${abonoExtraInput.value}` : "$0"],
+    ["Frecuencia de abono", `Cada ${abonoCadaInput.value || "1"} mes(es)`],
+    ["Inicio de abonos", `Mes ${abonoInicioInput.value || "1"}`],
+  ];
+}
+
 function downloadAmortizacionPdf() {
   if (!tablaBodyEl.children.length) {
     noteEl.textContent = "Primero calcula el escenario para descargar el PDF.";
@@ -531,6 +551,15 @@ function downloadAmortizacionPdf() {
   doc.setFontSize(10);
   doc.text(`Fecha de generacion: ${generatedAt}`, 14, 23);
 
+  const parameterRows = getAmortizacionParameterRows();
+  doc.autoTable({
+    startY: 30,
+    head: [["Parametro del cliente", "Valor"]],
+    body: parameterRows,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
   const summaryRows = [
     ["Cuota inicial sin abonos", cuotaBaseEl.textContent.trim()],
     ["Cuota inicial con abonos", cuotaConEl.textContent.trim()],
@@ -545,7 +574,7 @@ function downloadAmortizacionPdf() {
   ];
 
   doc.autoTable({
-    startY: 30,
+    startY: doc.lastAutoTable.finalY + 8,
     head: [["Indicador", "Valor"]],
     body: summaryRows,
     styles: { fontSize: 8 },

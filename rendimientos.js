@@ -276,17 +276,18 @@ function downloadPdfReport() {
   doc.text(`Fecha de generacion: ${dateLabel}`, 14, 23);
 
   doc.text("Parametros:", 14, 32);
-  doc.text(`Monto inicial: ${formatMoney(params.initialAmount)}`, 14, 38);
-  doc.text(`Aporte diario: ${formatMoney(params.dailyContribution)}`, 14, 44);
-  doc.text(`Tasa efectiva anual: ${formatPercent(params.annualRate)}`, 14, 50);
-  doc.text(`Plazo: ${params.days} dias`, 14, 56);
-  doc.text(`Vista tabla: ${params.tableView === "mensual" ? "Mensual (30 dias)" : "Diaria"}`, 14, 62);
+  doc.text("Objetivo: proyectar crecimiento de cuenta de alta rentabilidad.", 14, 38);
+  doc.text(`Monto inicial: ${formatMoney(params.initialAmount)}`, 14, 44);
+  doc.text(`Aporte diario: ${formatMoney(params.dailyContribution)}`, 14, 50);
+  doc.text(`Tasa efectiva anual: ${formatPercent(params.annualRate)}`, 14, 56);
+  doc.text(`Plazo: ${params.days} dias`, 14, 62);
+  doc.text(`Vista tabla: ${params.tableView === "mensual" ? "Mensual (30 dias)" : "Diaria"}`, 14, 68);
 
-  doc.text("Resultados:", 14, 72);
-  doc.text(`Saldo final: ${formatMoney(results.finalBalance)}`, 14, 78);
-  doc.text(`Total aportado: ${formatMoney(results.totalContrib)}`, 14, 84);
-  doc.text(`Intereses generados: ${formatMoney(results.totalInterest)}`, 14, 90);
-  doc.text(`Tasa efectiva diaria: ${formatPercent(results.dailyRate * 100)}`, 14, 96);
+  doc.text("Resultados:", 14, 78);
+  doc.text(`Saldo final: ${formatMoney(results.finalBalance)}`, 14, 84);
+  doc.text(`Total aportado: ${formatMoney(results.totalContrib)}`, 14, 90);
+  doc.text(`Intereses generados: ${formatMoney(results.totalInterest)}`, 14, 96);
+  doc.text(`Tasa efectiva diaria: ${formatPercent(results.dailyRate * 100)}`, 14, 102);
 
   const tableHead = [[periodLabel, "Aporte", "Interes del periodo", "Saldo"]];
   const tableBody = displayRows.map((rowData) => [
@@ -297,7 +298,7 @@ function downloadPdfReport() {
   ]);
 
   doc.autoTable({
-    startY: 104,
+    startY: 110,
     head: tableHead,
     body: tableBody,
     styles: { fontSize: 8 },

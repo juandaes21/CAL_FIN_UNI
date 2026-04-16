@@ -528,6 +528,26 @@ function buildTableRowsFromTbody(tbody) {
   );
 }
 
+function getPensionParameterRows() {
+  const retiroTipo = tipoRetiroInput.value === "perpetua" ? "Perpetua" : "Por tiempo";
+  const rows = [
+    ["Objetivo", "Plan de ahorro para pension"],
+    ["Moneda de calculo", monedaSelect.value],
+    ["Ingreso objetivo", ingresoInput.value ? `$${ingresoInput.value}` : "-"],
+    ["Frecuencia del ingreso objetivo", frecuenciaIngresoInput.value],
+    ["Tipo de retiro", retiroTipo],
+    ["Duracion del retiro", duracionRetiroInput.value || "No aplica (perpetua)"],
+    ["Años para pensionarse (X)", aniosRetiroInput.value || "-"],
+    ["Años de ahorro (Y)", aniosAhorroInput.value || "-"],
+    ["Rentabilidad anual esperada", `${rentInput.value || "0"}%`],
+    ["Inflacion anual promedio", `${inflacionInput.value || "0"}%`],
+    ["Rentabilidad conservadora sobre inflacion", `${conservadorInput.value || "0"}%`],
+    ["Frecuencia de aporte", frecuenciaInput.value],
+  ];
+
+  return rows;
+}
+
 function downloadPensionPdf() {
   if (!tablaBody.children.length) {
     pensionNoteEl.textContent = "Primero calcula el escenario para descargar el PDF.";
@@ -549,6 +569,15 @@ function downloadPensionPdf() {
   doc.setFontSize(10);
   doc.text(`Fecha de generacion: ${generatedAt}`, 14, 23);
 
+  const parameterRows = getPensionParameterRows();
+  doc.autoTable({
+    startY: 30,
+    head: [["Parametro del cliente", "Valor"]],
+    body: parameterRows,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [60, 106, 157] },
+  });
+
   const summaryRows = [
     [aporteLabelEl.textContent.trim(), aporteEl.textContent.trim()],
     ["Aporte requerido (USD)", aporteUsdEl.textContent.trim()],
@@ -565,7 +594,7 @@ function downloadPensionPdf() {
   ];
 
   doc.autoTable({
-    startY: 30,
+    startY: doc.lastAutoTable.finalY + 8,
     head: [["Indicador", "Valor"]],
     body: summaryRows,
     styles: { fontSize: 8 },
