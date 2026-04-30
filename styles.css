@@ -266,6 +266,40 @@ button:hover {
   gap: 18px;
 }
 
+.result-grid.compact {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.result-highlight {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: rgba(60, 106, 157, 0.08);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.result-subtitle {
+  margin: 18px 0 10px;
+  font-size: 1rem;
+}
+
+.note-inline {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.value-positive {
+  color: #1f7a46;
+}
+
+.value-negative {
+  color: #a2342e;
+}
+
 .label {
   font-size: 0.9rem;
   color: var(--muted);

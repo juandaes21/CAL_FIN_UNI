@@ -1,0 +1,304 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Comparativo de Escenarios</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <nav class="top-nav">
+        <div class="nav-left">
+          <a class="nav-logo" href="index.html">Fides Financial</a>
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Universidad</a>
+          <a href="pension.html">Pension</a>
+          <a href="amortizacion.html">Amortizacion</a>
+          <a href="tasas.html">Tasas</a>
+          <a href="rendimientos.html">Rendimientos</a>
+          <a href="devaluacion.html">Devaluacion</a>
+          <a class="active" href="comparativo.html">Comparativo</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="brand">
+          <img class="logo" src="logo.png" alt="Fides Financial" />
+        </div>
+        <p class="eyebrow">Escenarios de inversión</p>
+        <h1>Comparativo: apartamento vs cuenta en dolares</h1>
+        <p class="lead">
+          Compara comprar en planos (con cuota inicial diferida) frente a invertir los
+          mismos flujos en una cuenta de inversión en USD.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Parametros</h2>
+          <form id="comparativo-form" autocomplete="off">
+            <div class="form-grid">
+              <label>
+                Valor apartamento (COP)
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input id="valor-apto" class="money-input" type="text" inputmode="decimal" placeholder="Ej: 400,000,000" />
+                </div>
+              </label>
+
+              <label>
+                Horizonte de comparación (años)
+                <input id="horizonte-anios" type="number" min="1" step="1" value="10" />
+              </label>
+
+              <label>
+                Meses de construccion (planos)
+                <input id="meses-construccion" type="number" min="1" step="1" value="30" />
+              </label>
+
+              <label>
+                Cuota inicial (%)
+                <input id="cuota-inicial-pct" type="number" min="0" max="100" step="0.01" value="30" />
+              </label>
+
+              <label>
+                Saldo al entregar
+                <select id="tipo-saldo">
+                  <option value="credito">Financiado con credito</option>
+                  <option value="contado">Pago de contado</option>
+                </select>
+              </label>
+
+              <label>
+                Tasa credito EA (%)
+                <input id="tasa-credito" type="number" min="0" step="0.01" value="12" />
+              </label>
+
+              <label>
+                Plazo crédito (años)
+                <input id="plazo-credito" type="number" min="1" step="1" value="10" />
+              </label>
+
+              <label>
+                Valorizacion anual apartamento (%)
+                <input id="valorizacion-apto" type="number" min="-50" step="0.01" value="9" />
+              </label>
+
+              <label>
+                Costos de venta (%)
+                <input id="costos-venta" type="number" min="0" step="0.01" value="4.27" />
+              </label>
+
+              <label>
+                Canon mensual (% sobre valor comercial)
+                <input id="canon-pct" type="number" min="0" step="0.01" value="0.5" />
+              </label>
+
+              <label>
+                Gastos/vacancia (% sobre canon)
+                <input id="gastos-canon-pct" type="number" min="0" step="0.01" value="39" />
+              </label>
+
+              <label>
+                Perfil de costos del apto
+                <select id="perfil-costos-apto">
+                  <option value="bogota">Bogotá (referencia)</option>
+                  <option value="medellin">Medellín (referencia)</option>
+                  <option value="cali">Cali (referencia)</option>
+                  <option value="personalizado">Personalizado</option>
+                </select>
+              </label>
+
+              <label>
+                Factor administración mensual (% sobre valor apto)
+                <input id="admin-factor-pct" type="number" min="0" step="0.001" value="0.09" />
+              </label>
+
+              <label>
+                Administración mensual estimada (COP)
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input id="admin-mensual" class="money-input" type="text" inputmode="decimal" readonly />
+                </div>
+              </label>
+
+              <label>
+                Predial + otros impuestos anuales (% valor apto)
+                <input id="impuestos-anuales-pct" type="number" min="0" step="0.01" value="1" />
+              </label>
+
+              <label>
+                Otros costos anuales del apto (COP)
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input id="otros-costos-anuales" class="money-input" type="text" inputmode="decimal" placeholder="Ej: 0" />
+                </div>
+              </label>
+
+              <label>
+                Tasa anual cuenta USD (%)
+                <input id="tasa-cuenta-usd" type="number" min="0" step="0.01" value="9" />
+              </label>
+
+              <label>
+                Aporte adicional mensual a cuenta (COP)
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input id="aporte-adicional-cuenta" class="money-input" type="text" inputmode="decimal" placeholder="Ej: 0" />
+                </div>
+              </label>
+
+              <label>
+                TRM inicial (COP/USD)
+                <input id="trm-inicial-comp" type="number" min="1" step="0.01" placeholder="Ej: 4000" />
+              </label>
+
+              <label>
+                Devaluacion anual proyectada (%)
+                <input id="deval-anual-comp" type="number" min="-99" step="0.01" placeholder="Ej: 5" />
+              </label>
+
+              <label>
+                Moneda de presentación
+                <select id="moneda-presentacion">
+                  <option value="COP">COP</option>
+                  <option value="USD">USD</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-inline">
+              <button class="ghost" type="button" id="usar-trm-actual-comp">Usar TRM actual</button>
+              <button type="button" id="calcular-comparativo">Calcular</button>
+            </div>
+          </form>
+          <p class="note" id="comparativo-trm-note">TRM actual: cargando...</p>
+        </section>
+
+        <section class="card result-card">
+          <h2>Resultados</h2>
+          <div class="result-highlight">
+            <div>
+              <p class="label">Mejor escenario de apartamento al horizonte</p>
+              <p class="value" id="res-mejor-apto-horizonte">$0,00</p>
+              <p class="note-inline" id="res-mejor-apto-etiqueta">-</p>
+            </div>
+            <div>
+              <p class="label">Ventaja de la cuenta USD al horizonte</p>
+              <p class="value" id="res-delta-horizonte">$0,00</p>
+              <p class="note-inline" id="res-delta-horizonte-label">Si es positivo, gana la cuenta USD.</p>
+            </div>
+          </div>
+
+          <h3 class="result-subtitle">Entrega del proyecto</h3>
+          <div class="result-grid compact">
+            <div>
+              <p class="label" id="lbl-venta-entrega">Venta al entregar neta (COP)</p>
+              <p class="value" id="res-venta-entrega">$0,00</p>
+            </div>
+            <div>
+              <p class="label" id="lbl-cuenta-entrega">Cuenta USD con flujos espejo al entregar (COP)</p>
+              <p class="value" id="res-cuenta-entrega">$0,00</p>
+            </div>
+          </div>
+
+          <h3 class="result-subtitle">Comparación al horizonte</h3>
+          <div class="result-grid">
+            <div>
+              <p class="label" id="lbl-venta-reinvertida">Venta al entregar reinvertida al horizonte (COP)</p>
+              <p class="value" id="res-venta-reinvertida">$0,00</p>
+            </div>
+            <div>
+              <p class="label" id="lbl-cuenta-horizonte">Cuenta USD con flujos espejo al horizonte (COP)</p>
+              <p class="value" id="res-cuenta-horizonte">$0,00</p>
+            </div>
+            <div>
+              <p class="label" id="lbl-renta-sin-vender">Apartamento rentando sin vender (COP)</p>
+              <p class="value" id="res-renta-sin-vender">$0,00</p>
+            </div>
+            <div>
+              <p class="label" id="lbl-renta-vendiendo">Apartamento rentando y vendiendo al horizonte (COP)</p>
+              <p class="value" id="res-renta-vendiendo">$0,00</p>
+            </div>
+            <div>
+              <p class="label">TRM final proyectada</p>
+              <p class="value" id="res-trm-final">0,00</p>
+            </div>
+            <div>
+              <p class="label">Ganador (horizonte)</p>
+              <p class="value" id="res-ganador">-</p>
+            </div>
+          </div>
+          <h3 class="result-subtitle">Desglose al horizonte</h3>
+          <div class="result-grid compact">
+            <div>
+              <p class="label">Valor comercial del apto</p>
+              <p class="value" id="res-break-valor-apto">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Deuda pendiente</p>
+              <p class="value" id="res-break-deuda">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Caja acumulada de arriendos netos</p>
+              <p class="value" id="res-break-caja">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Costo de venta estimado</p>
+              <p class="value" id="res-break-costo-venta">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Canon mínimo mensual para cubrir costos del inversionista</p>
+              <p class="value" id="res-break-canon-equilibrio">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Canon mínimo mensual para cubrir costos + cuota crédito</p>
+              <p class="value" id="res-break-canon-equilibrio-credito">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Canon sugerido al arrendatario (incluye administración)</p>
+              <p class="value" id="res-break-canon-con-admin">$0,00</p>
+            </div>
+          </div>
+          <p class="note" id="comparativo-note">Ingresa los datos para calcular.</p>
+          <button class="ghost download-pdf-btn" type="button" id="descargar-comparativo-pdf">
+            Descargar PDF para cliente
+          </button>
+        </section>
+      </main>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <div class="table-head-row">
+            <h2>Tabla anual comparativa</h2>
+            <label class="table-view-label">
+              Vista
+              <select id="tabla-vista-comp">
+                <option value="ejecutivo">Ejecutiva</option>
+                <option value="detallado">Detallada</option>
+              </select>
+            </label>
+          </div>
+          <p class="note-inline">
+            Referencia rápida: Flujo neto apto = renta neta - pagos del apartamento.
+          </p>
+          <div class="table-summary" id="tabla-comparativo-resumen">Ingresa los datos para ver la tabla.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr id="tabla-comparativo-head"></tr>
+            </thead>
+            <tbody id="tabla-comparativo-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="comparativo.js"></script>
+  </body>
+</html>

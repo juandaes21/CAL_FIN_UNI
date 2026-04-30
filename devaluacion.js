@@ -43,6 +43,7 @@ const pctFmt = new Intl.NumberFormat("es-ES", {
 });
 
 let trmData = null;
+let promedioDevaluacion15Anios = null;
 
 function formatCOP(value) {
   return `$${copFmt.format(value)}`;
@@ -189,12 +190,73 @@ async function fetchTRM() {
   return null;
 }
 
+async function fetchAverageDevaluation15Years() {
+  const url =
+    "https://www.datos.gov.co/resource/32sa-8pi3.json?$select=date_extract_y(vigenciadesde)%20as%20anio,avg(valor)%20as%20trm_prom&$group=anio&$order=anio%20ASC";
+
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) return null;
+    const rows = await response.json();
+    if (!Array.isArray(rows) || rows.length < 3) return null;
+
+    const ordered = rows
+      .map((row) => ({
+        year: Number(row.anio),
+        trm: Number(row.trm_prom),
+      }))
+      .filter((row) => Number.isFinite(row.year) && Number.isFinite(row.trm) && row.trm > 0)
+      .sort((a, b) => a.year - b.year);
+
+    if (ordered.length < 3) return null;
+
+    const changes = [];
+    for (let i = 1; i < ordered.length; i += 1) {
+      const prev = ordered[i - 1];
+      const curr = ordered[i];
+      const rate = curr.trm / prev.trm - 1;
+      if (Number.isFinite(rate)) {
+        changes.push({
+          fromYear: prev.year,
+          toYear: curr.year,
+          rate,
+        });
+      }
+    }
+
+    if (!changes.length) return null;
+
+    const last15 = changes.slice(-15);
+    const avgRate = last15.reduce((acc, item) => acc + item.rate, 0) / last15.length;
+
+    return {
+      avgRate,
+      periods: last15.length,
+      fromYear: last15[0].fromYear,
+      toYear: last15[last15.length - 1].toYear,
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
 function updateTrmNote() {
+  let baseMessage = "";
   if (trmData && trmData.value) {
     const dateLabel = trmData.date ? ` (${trmData.date})` : "";
-    trmNoteEl.textContent = `TRM actual: ${copFmt.format(trmData.value)} COP/USD - ${trmData.source}${dateLabel}.`;
+    baseMessage = `TRM actual: ${copFmt.format(trmData.value)} COP/USD - ${trmData.source}${dateLabel}.`;
   } else {
-    trmNoteEl.textContent = "TRM actual no disponible.";
+    baseMessage = "TRM actual no disponible.";
+  }
+
+  if (promedioDevaluacion15Anios) {
+    const avgLabel = (promedioDevaluacion15Anios.avgRate * 100).toFixed(2);
+    trmNoteEl.textContent =
+      `${baseMessage} ` +
+      `Valor default de devaluacion anual: ${avgLabel}% (promedio ${promedioDevaluacion15Anios.periods} años, ` +
+      `${promedioDevaluacion15Anios.fromYear}-${promedioDevaluacion15Anios.toYear}).`;
+  } else {
+    trmNoteEl.textContent = baseMessage;
   }
 }
 
@@ -222,6 +284,12 @@ function clearResults() {
   equivalenteInicialResEl.textContent = monedaBaseInput.value === "USD" ? "$0,00" : "US$0.00";
   equivalenteFinalResEl.textContent = monedaBaseInput.value === "USD" ? "$0,00" : "US$0.00";
   noteEl.textContent = "Ingresa los datos para calcular.";
+}
+
+function applyDefaultDevaluationInput() {
+  if (!promedioDevaluacion15Anios) return;
+  if (devalAnualProyectadaInput.value !== "") return;
+  devalAnualProyectadaInput.value = (promedioDevaluacion15Anios.avgRate * 100).toFixed(2);
 }
 
 function calculate() {
@@ -281,6 +349,11 @@ function calculate() {
     currency === "USD"
       ? "Resultados principales mostrados en USD."
       : "Resultados principales mostrados en COP.";
+
+  if (promedioDevaluacion15Anios) {
+    const avgLabel = (promedioDevaluacion15Anios.avgRate * 100).toFixed(2);
+    noteEl.textContent += ` Referencia: promedio ${promedioDevaluacion15Anios.periods} años (${promedioDevaluacion15Anios.fromYear}-${promedioDevaluacion15Anios.toYear}) = ${avgLabel}% anual.`;
+  }
 }
 
 btnCalcular.addEventListener("click", calculate);
@@ -318,7 +391,9 @@ if (btnUsarTrmActual) {
 async function init() {
   setupMoneyInputs();
   trmData = await fetchTRM();
+  promedioDevaluacion15Anios = await fetchAverageDevaluation15Years();
   updateTrmNote();
+  applyDefaultDevaluationInput();
   clearResults();
 }
 
