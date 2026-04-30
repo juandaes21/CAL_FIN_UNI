@@ -1,13 +1,14 @@
 const montoBaseInput = document.getElementById("monto-base");
 const monedaBaseInput = document.getElementById("moneda-base");
 const trmInicialInput = document.getElementById("trm-inicial");
-const trmFinalInput = document.getElementById("trm-final");
+const devalAnualProyectadaInput = document.getElementById("deval-anual-proyectada");
 const plazoAniosInput = document.getElementById("plazo-anios");
 const btnUsarTrmActual = document.getElementById("usar-trm-actual");
 const btnCalcular = document.getElementById("calcular-devaluacion");
 
 const devalAcumuladaEl = document.getElementById("deval-acumulada");
 const devalAnualizadaEl = document.getElementById("deval-anualizada");
+const trmFinalProyectadaEl = document.getElementById("trm-final-proyectada");
 const montoInicialLabelEl = document.getElementById("monto-inicial-label");
 const montoInicialResEl = document.getElementById("monto-inicial-res");
 const montoAjustadoLabelEl = document.getElementById("monto-ajustado-label");
@@ -215,6 +216,7 @@ function clearResults() {
   updateCurrencyLabels(monedaBaseInput.value);
   devalAcumuladaEl.textContent = "0,0000%";
   devalAnualizadaEl.textContent = "0,0000%";
+  trmFinalProyectadaEl.textContent = "0,00";
   montoInicialResEl.textContent = monedaBaseInput.value === "USD" ? "US$0.00" : "$0,00";
   montoAjustadoResEl.textContent = monedaBaseInput.value === "USD" ? "US$0.00" : "$0,00";
   equivalenteInicialResEl.textContent = monedaBaseInput.value === "USD" ? "$0,00" : "US$0.00";
@@ -226,7 +228,7 @@ function calculate() {
   const amount = parseMoneyInput(montoBaseInput.value);
   const currency = monedaBaseInput.value;
   const trmInitial = Number(trmInicialInput.value);
-  const trmFinal = Number(trmFinalInput.value);
+  const devalAnnualPct = Number(devalAnualProyectadaInput.value);
   const years = Number(plazoAniosInput.value);
 
   updateCurrencyLabels(currency);
@@ -236,8 +238,8 @@ function calculate() {
     amount < 0 ||
     !Number.isFinite(trmInitial) ||
     trmInitial <= 0 ||
-    !Number.isFinite(trmFinal) ||
-    trmFinal <= 0 ||
+    !Number.isFinite(devalAnnualPct) ||
+    devalAnnualPct <= -100 ||
     !Number.isFinite(years) ||
     years <= 0
   ) {
@@ -245,12 +247,15 @@ function calculate() {
     return;
   }
 
-  const ratio = trmFinal / trmInitial;
+  const devalAnnual = devalAnnualPct / 100;
+  const ratio = Math.pow(1 + devalAnnual, years);
+  const trmFinal = trmInitial * ratio;
   const devalAccum = ratio - 1;
-  const devalAnnual = Math.pow(ratio, 1 / years) - 1;
+  const devalAnnualized = Math.pow(ratio, 1 / years) - 1;
 
   devalAcumuladaEl.textContent = formatPercent(devalAccum);
-  devalAnualizadaEl.textContent = formatPercent(devalAnnual);
+  devalAnualizadaEl.textContent = formatPercent(devalAnnualized);
+  trmFinalProyectadaEl.textContent = copFmt.format(trmFinal);
 
   if (currency === "USD") {
     const adjustedUSD = amount / ratio;
@@ -283,7 +288,7 @@ btnCalcular.addEventListener("click", calculate);
 if (btnUsarTrmActual) {
   btnUsarTrmActual.addEventListener("click", () => {
     if (trmData && trmData.value) {
-      trmFinalInput.value = trmData.value.toFixed(2);
+      trmInicialInput.value = trmData.value.toFixed(2);
       calculate();
     } else {
       noteEl.textContent = "TRM actual no disponible para autocompletar.";
@@ -291,7 +296,13 @@ if (btnUsarTrmActual) {
   });
 }
 
-[montoBaseInput, monedaBaseInput, trmInicialInput, trmFinalInput, plazoAniosInput].forEach((input) => {
+[
+  montoBaseInput,
+  monedaBaseInput,
+  trmInicialInput,
+  devalAnualProyectadaInput,
+  plazoAniosInput,
+].forEach((input) => {
   input.addEventListener("input", () => {
     if (devalAcumuladaEl.textContent !== "0,0000%") {
       calculate();
