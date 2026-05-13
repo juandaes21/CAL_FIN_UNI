@@ -1,0 +1,211 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Comparativo Backtest</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <nav class="top-nav">
+        <div class="nav-left">
+          <a class="nav-logo" href="index.html">Fides Financial</a>
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Universidad</a>
+          <a href="pension.html">Pension</a>
+          <a href="amortizacion.html">Amortización</a>
+          <a href="tasas.html">Tasas</a>
+          <a href="rendimientos.html">Rendimientos</a>
+          <a href="devaluacion.html">Devaluacion</a>
+          <a href="comparativo.html">Comparativo</a>
+          <a class="active" href="comparativo-backtest.html">Backtest</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="brand">
+          <img class="logo" src="logo.png" alt="Fides Financial" />
+        </div>
+        <p class="eyebrow">Validación histórica</p>
+        <h1>Backtest: apartamento vs cuenta en USD</h1>
+        <p class="lead">
+          Compara cohortes históricas de inicio usando TRM promedio real anual para validar
+          qué estrategia habría ganado.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Parámetros</h2>
+          <form id="backtest-form" autocomplete="off">
+            <div class="form-grid">
+              <label>
+                Valor apartamento inicial (COP)
+                <div class="input-row">
+                  <span class="prefix">$</span>
+                  <input id="bt-valor-apto" class="money-input" type="text" inputmode="decimal" placeholder="Ej: 400,000,000" />
+                </div>
+              </label>
+
+              <label>
+                Horizonte del backtest (años)
+                <input id="bt-horizonte" type="number" min="1" step="1" value="10" />
+              </label>
+
+              <label>
+                Año inicial
+                <input id="bt-anio-inicio" type="number" min="1900" step="1" />
+              </label>
+
+              <label>
+                Año final
+                <input id="bt-anio-fin" type="number" min="1900" step="1" />
+              </label>
+
+              <label class="timeline-block">
+                Línea de tiempo de backtest
+                <div class="timeline-head">
+                  <span id="bt-timeline-start-label">Inicio: -</span>
+                  <span id="bt-timeline-end-label">Fin: -</span>
+                  <span>Límites: <span id="bt-limit-min">-</span> a <span id="bt-limit-max">-</span></span>
+                </div>
+                <div class="timeline-sliders">
+                  <input id="bt-timeline-start" type="range" min="1900" max="2100" step="1" value="2000" />
+                  <input id="bt-timeline-end" type="range" min="1900" max="2100" step="1" value="2020" />
+                </div>
+              </label>
+
+              <label>
+                Cuota inicial (%)
+                <input id="bt-cuota-inicial" type="number" min="0" max="100" step="0.01" value="30" />
+              </label>
+
+              <label>
+                Saldo al comprar
+                <select id="bt-tipo-saldo">
+                  <option value="credito">Financiado con crédito</option>
+                  <option value="contado">Pago de contado</option>
+                </select>
+              </label>
+
+              <label>
+                Tasa crédito E.A. (%)
+                <input id="bt-tasa-credito" type="number" min="0" step="0.01" value="12" />
+              </label>
+
+              <label>
+                Plazo crédito (años)
+                <input id="bt-plazo-credito" type="number" min="1" step="1" value="10" />
+              </label>
+
+              <label>
+                Valorización anual apto (%)
+                <input id="bt-valorizacion" type="number" min="-50" step="0.01" readonly />
+              </label>
+
+              <label>
+                Costos de venta (%)
+                <input id="bt-costos-venta" type="number" min="0" max="100" step="0.01" value="4.27" />
+              </label>
+
+              <label>
+                Backtest cuenta USD con
+                <select id="bt-benchmark-usd">
+                  <option value="SPX">SPX / S&P 500</option>
+                  <option value="NASDAQ">Nasdaq Composite</option>
+                </select>
+              </label>
+            </div>
+
+            <button type="button" id="bt-calcular">Calcular backtest</button>
+          </form>
+          <p class="note" id="bt-valorizacion-note">
+            Valorización fija usada: promedio grandes ciudades (Bogotá+Soacha, Medellín AM, Cali AU).
+          </p>
+          <p class="note-inline">
+            Cuenta espejo (backtest): cada año invierte en USD el mismo flujo anual del apartamento en COP, convertido
+            por TRM de ese año, y renta con el retorno histórico del benchmark elegido (SPX o Nasdaq).
+          </p>
+          <p class="warning" id="bt-warning" hidden></p>
+          <p class="note" id="bt-note">Cargando TRM histórica anual...</p>
+        </section>
+
+        <section class="card result-card">
+          <h2>Resumen</h2>
+          <div class="result-highlight">
+            <div>
+              <p class="label">Resumen ejecutivo</p>
+              <p class="note-inline" id="bt-resumen-ejecutivo">Calcula para ver conclusión histórica.</p>
+            </div>
+          </div>
+          <div class="result-grid">
+            <div>
+              <p class="label">Cohortes evaluadas</p>
+              <p class="value" id="bt-cohortes">0</p>
+            </div>
+            <div>
+              <p class="label">Cuenta USD gana</p>
+              <p class="value" id="bt-gana-usd">0%</p>
+            </div>
+            <div>
+              <p class="label">Apartamento gana</p>
+              <p class="value" id="bt-gana-apto">0%</p>
+            </div>
+            <div>
+              <p class="label">Empate técnico</p>
+              <p class="value" id="bt-empate">0%</p>
+            </div>
+            <div>
+              <p class="label">Ventaja promedio cuenta (COP)</p>
+              <p class="value" id="bt-ventaja-promedio">$0,00</p>
+            </div>
+            <div>
+              <p class="label">Mejor cohorte para cuenta</p>
+              <p class="value" id="bt-mejor-cuenta">-</p>
+            </div>
+            <div>
+              <p class="label">Mejor cohorte para apto</p>
+              <p class="value" id="bt-mejor-apto">-</p>
+            </div>
+          </div>
+          <button class="ghost download-pdf-btn" type="button" id="bt-descargar-pdf">
+            Descargar PDF para cliente
+          </button>
+        </section>
+      </main>
+
+      <section class="card table-card">
+        <div class="table-head">
+          <h2>Tabla de cohortes</h2>
+          <div class="table-summary" id="bt-tabla-resumen">Calcula para ver la tabla histórica.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Año inicio</th>
+                <th>Año fin</th>
+                <th>TRM inicio</th>
+                <th>TRM fin</th>
+                <th>Apto final neto (COP)</th>
+                <th>Cuenta espejo final (COP)</th>
+                <th>Diferencia (COP)</th>
+                <th>Ganador</th>
+              </tr>
+            </thead>
+            <tbody id="bt-tabla-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="data/benchmark-annual-returns.js"></script>
+    <script src="data/trm-annual-fallback.js"></script>
+    <script src="comparativo-backtest.js"></script>
+  </body>
+</html>
+

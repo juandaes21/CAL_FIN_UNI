@@ -16,6 +16,7 @@ const impuestosAnualesPctInput = document.getElementById("impuestos-anuales-pct"
 const otrosCostosAnualesInput = document.getElementById("otros-costos-anuales");
 const tasaCuentaUsdInput = document.getElementById("tasa-cuenta-usd");
 const aporteAdicionalCuentaInput = document.getElementById("aporte-adicional-cuenta");
+const modoCuentaEspejoInput = document.getElementById("modo-cuenta-espejo");
 const trmInicialInput = document.getElementById("trm-inicial-comp");
 const devalAnualInput = document.getElementById("deval-anual-comp");
 const monedaPresentacionInput = document.getElementById("moneda-presentacion");
@@ -49,6 +50,7 @@ const resBreakCostoVentaEl = document.getElementById("res-break-costo-venta");
 const resBreakCanonEquilibrioEl = document.getElementById("res-break-canon-equilibrio");
 const resBreakCanonEquilibrioCreditoEl = document.getElementById("res-break-canon-equilibrio-credito");
 const resBreakCanonConAdminEl = document.getElementById("res-break-canon-con-admin");
+const resumenComparativoEjecutivoEl = document.getElementById("resumen-comparativo-ejecutivo");
 
 const noteEl = document.getElementById("comparativo-note");
 const trmNoteEl = document.getElementById("comparativo-trm-note");
@@ -353,6 +355,8 @@ function clearResults() {
   resBreakCanonEquilibrioEl.textContent = zero;
   resBreakCanonEquilibrioCreditoEl.textContent = zero;
   resBreakCanonConAdminEl.textContent = zero;
+  resumenComparativoEjecutivoEl.textContent =
+    "Calcula para ver una conclusión rápida para cliente.";
   resTrmFinalEl.textContent = "0.00";
   resGanadorEl.textContent = "-";
 
@@ -381,6 +385,7 @@ function simulateComparative(params) {
     otrosCostosAnualesCop,
     tasaCuentaUsdEA,
     aporteAdicionalMensualCop,
+    mirrorMode,
     trmInicial,
     devalAnualPct,
   } = params;
@@ -463,9 +468,15 @@ function simulateComparative(params) {
     }
 
     const trmMonth = trmInicial * Math.pow(1 + devalMonthly, month);
-    const mirrorContributionCop = aptoOutflowCop + aporteAdicionalMensualCop;
+    const netAptoFlowCop = aptoOutflowCop - rentNetCop;
+    const mirrorBaseContributionCop =
+      mirrorMode === "con-retiros" ? Math.max(0, netAptoFlowCop) : aptoOutflowCop;
+    const mirrorContributionCop = mirrorBaseContributionCop + aporteAdicionalMensualCop;
+    const mirrorWithdrawalCop = mirrorMode === "con-retiros" ? Math.max(0, -netAptoFlowCop) : 0;
     const mirrorContributionUsd = mirrorContributionCop > 0 ? mirrorContributionCop / trmMonth : 0;
-    accountUsd = (accountUsd + mirrorContributionUsd) * (1 + usdMonthly);
+    const desiredWithdrawalUsd = mirrorWithdrawalCop > 0 ? mirrorWithdrawalCop / trmMonth : 0;
+    const effectiveWithdrawalUsd = Math.min(accountUsd + mirrorContributionUsd, desiredWithdrawalUsd);
+    accountUsd = (accountUsd + mirrorContributionUsd - effectiveWithdrawalUsd) * (1 + usdMonthly);
 
     if (month <= horizonMonths) {
       yearPaymentCop += paymentOnlyMonthCop;
@@ -715,6 +726,7 @@ function readInputs() {
     otrosCostosAnualesCop: parseMoneyInput(otrosCostosAnualesInput.value) || 0,
     tasaCuentaUsdEA: Number(tasaCuentaUsdInput.value),
     aporteAdicionalMensualCop: parseMoneyInput(aporteAdicionalCuentaInput.value) || 0,
+    mirrorMode: modoCuentaEspejoInput.value,
     trmInicial: Number(trmInicialInput.value),
     devalAnualPct: Number(devalAnualInput.value),
     presentCurrency: monedaPresentacionInput.value,
@@ -856,6 +868,10 @@ function calculate() {
   resDeltaHorizonteEl.classList.add(deltaHorizonteValue >= 0 ? "value-positive" : "value-negative");
   resDeltaHorizonteLabelEl.textContent =
     deltaHorizonteValue >= 0 ? "Positivo: la cuenta USD queda por encima." : "Negativo: el apartamento queda por encima.";
+  const deltaHorizonteCop = scenario.accountHorizonCop - scenario.bestApartmentHorizonCop;
+  resumenComparativoEjecutivoEl.textContent =
+    `Al horizonte de ${input.horizonteAnios} años, ${scenario.winner} ` +
+    `muestra una diferencia de ${copCurrencyFmt.format(Math.abs(deltaHorizonteCop))} en COP.`;
   resBreakValorAptoEl.textContent = formatByCurrency(breakValorApto, input.presentCurrency);
   resBreakDeudaEl.textContent = formatByCurrency(breakDeuda, input.presentCurrency);
   resBreakCajaEl.textContent = formatByCurrency(breakCaja, input.presentCurrency);
@@ -881,7 +897,8 @@ function calculate() {
     `Entrega estimada en ${deliveryYear} años. ` +
     `Antes de entrega, capital apto = cuota pagada acumulada + diferencia entre valor de mercado y precio de compra. ` +
     `El flujo neto del apto ya incluye predial/impuestos y otros costos anuales (administración referencial por fuera). ` +
-    `Administración estimada mensual: ${copCurrencyFmt.format(input.adminMensualCop)}.`;
+    `Administración estimada mensual: ${copCurrencyFmt.format(input.adminMensualCop)}. ` +
+    `Cuenta espejo: ${input.mirrorMode === "con-retiros" ? "con retiros por flujo positivo" : "solo aportes (sin retiros)"}.`;
 
   if (input.horizonteAnios * 12 < input.mesesConstruccion) {
     noteEl.textContent += " Aviso: el horizonte termina antes de la entrega del inmueble.";
@@ -939,6 +956,7 @@ function downloadPdf() {
     ["Otros costos anuales apto", copCurrencyFmt.format(input.otrosCostosAnualesCop)],
     ["Tasa cuenta USD E.A.", `${input.tasaCuentaUsdEA}%`],
     ["Aporte adicional mensual", copCurrencyFmt.format(input.aporteAdicionalMensualCop)],
+    ["Modo cuenta espejo", input.mirrorMode === "con-retiros" ? "Con retiros por flujo positivo" : "Sin retiros (solo aportes)"],
     ["TRM inicial", copNumberFmt.format(input.trmInicial)],
     ["Devaluación anual", `${input.devalAnualPct}%`],
     ["Moneda presentación", input.presentCurrency],
@@ -953,6 +971,7 @@ function downloadPdf() {
   });
 
   const summaryRows = [
+    ["Resumen ejecutivo", resumenComparativoEjecutivoEl.textContent.trim()],
     ["Mejor escenario apartamento al horizonte", scenario.bestApartmentScenarioLabel],
     ["Mejor escenario apartamento (valor)", money(scenario.bestApartmentHorizonCop, scenario.bestApartmentHorizonUsd)],
     ["Venta al entregar neta", money(scenario.saleDeliveryNetCop, scenario.saleDeliveryNetUsd)],
@@ -1053,6 +1072,7 @@ if (btnUsarTrmActual) {
   otrosCostosAnualesInput,
   tasaCuentaUsdInput,
   aporteAdicionalCuentaInput,
+  modoCuentaEspejoInput,
   trmInicialInput,
   devalAnualInput,
   monedaPresentacionInput,

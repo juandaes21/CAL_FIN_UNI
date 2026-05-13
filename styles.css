@@ -292,6 +292,28 @@ button:hover {
   color: var(--muted);
 }
 
+.timeline-block {
+  grid-column: 1 / -1;
+}
+
+.timeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.timeline-sliders {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.timeline-sliders input[type="range"] {
+  flex: 1 1 0;
+}
+
 .value-positive {
   color: #1f7a46;
 }

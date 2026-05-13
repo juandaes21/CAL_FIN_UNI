@@ -20,6 +20,7 @@
           <a href="rendimientos.html">Rendimientos</a>
           <a href="devaluacion.html">Devaluacion</a>
           <a href="comparativo.html">Comparativo</a>
+          <a href="comparativo-backtest.html">Backtest</a>
         </div>
       </nav>
 
@@ -127,6 +128,19 @@
 
         <section class="card result-card">
           <h2>Resultado</h2>
+          <div class="result-highlight">
+            <div>
+              <p class="label">Semáforo de viabilidad</p>
+              <p class="value" id="riesgo-pension">-</p>
+              <p class="note-inline" id="riesgo-pension-note">Calcula para ver el diagnóstico.</p>
+            </div>
+            <div>
+              <p class="label">Resumen ejecutivo</p>
+              <p class="note-inline" id="resumen-pension-ejecutivo">
+                Calcula para ver una conclusión rápida para cliente.
+              </p>
+            </div>
+          </div>
           <div class="result-grid">
             <div>
               <p class="label" id="aporte-label">Aporte requerido (COP)</p>
@@ -211,3 +225,5 @@
     <script src="pension.js"></script>
   </body>
 </html>
+
+

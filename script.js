@@ -33,6 +33,9 @@ const tablaTotalResumen = document.getElementById("tabla-total-resumen");
 const tablaTotalBody = document.getElementById("tabla-total-body");
 const tablaVistaInput = document.getElementById("tabla-vista");
 const tablaPeriodoHead = document.getElementById("tabla-periodo-head");
+const riesgoUniversidadEl = document.getElementById("riesgo-universidad");
+const riesgoUniversidadNoteEl = document.getElementById("riesgo-universidad-note");
+const resumenUniversidadEjecutivoEl = document.getElementById("resumen-universidad-ejecutivo");
 
 const BANREP_URL =
   "https://suameca.banrep.gov.co/estadisticas-economicas/informacionSerie/1/tasa_cambio_peso_colombiano_trm_dolar_usd/";
@@ -53,6 +56,51 @@ const usdFmt = new Intl.NumberFormat("en-US", {
 
 let trmData = null;
 let childCounter = 0;
+
+function clearUniversityExecutiveSummary() {
+  if (!riesgoUniversidadEl) return;
+  riesgoUniversidadEl.textContent = "-";
+  riesgoUniversidadEl.classList.remove("value-positive", "value-negative");
+  riesgoUniversidadNoteEl.textContent = "Calcula para ver el diagnóstico.";
+  resumenUniversidadEjecutivoEl.textContent =
+    "Calcula para ver una conclusión rápida para cliente.";
+}
+
+function evaluateUniversityRisk({
+  childrenCount,
+  monthsToFirstWithdrawal,
+  contribution,
+  annualContribution,
+  annualProgramCostBase,
+  spread,
+}) {
+  let score = 0;
+  if (childrenCount >= 3) score += 1;
+  if (monthsToFirstWithdrawal < 24) score += 2;
+  else if (monthsToFirstWithdrawal < 48) score += 1;
+  if (annualProgramCostBase > 0 && annualContribution / annualProgramCostBase > 1.2) score += 1;
+  if (spread < 2) score += 1;
+
+  if (score <= 1) {
+    return {
+      level: "Bajo",
+      note: "La meta luce alcanzable con una exigencia de aporte razonable.",
+      className: "value-positive",
+    };
+  }
+  if (score <= 3) {
+    return {
+      level: "Medio",
+      note: "Meta viable, sensible al tiempo disponible y a la rentabilidad esperada.",
+      className: "",
+    };
+  }
+  return {
+    level: "Alto",
+    note: "El plan requiere aportes altos o ajustes de plazo/supuestos.",
+    className: "value-negative",
+  };
+}
 
 function formatMoney(value) {
   return `$${moneyFmt.format(value)}`;
@@ -644,6 +692,7 @@ function calculate() {
     tablaTotalResumen.textContent = "Ingresa los datos para ver la tabla total.";
     aporteWarningEl.hidden = true;
     clearTables();
+    clearUniversityExecutiveSummary();
     return;
   }
 
@@ -662,6 +711,7 @@ function calculate() {
     tablaTotalResumen.textContent = "Ingresa los datos para ver la tabla total.";
     aporteWarningEl.hidden = true;
     clearTables();
+    clearUniversityExecutiveSummary();
     return;
   }
 
@@ -694,6 +744,7 @@ function calculate() {
     tablaTotalResumen.textContent = "Ingresa los datos para ver la tabla total.";
     aporteWarningEl.hidden = true;
     clearTables();
+    clearUniversityExecutiveSummary();
     return;
   }
 
@@ -774,6 +825,22 @@ function calculate() {
     totalAportadoUsdEl.textContent = "US$0.00";
     montoTotalUsdEl.textContent = "US$0.00";
   }
+
+  const risk = evaluateUniversityRisk({
+    childrenCount: children.length,
+    monthsToFirstWithdrawal: firstStartMonth,
+    contribution,
+    annualContribution,
+    annualProgramCostBase: costoSemestre * 2,
+    spread: rentabilidad - inflacion,
+  });
+  riesgoUniversidadEl.textContent = risk.level;
+  riesgoUniversidadEl.classList.remove("value-positive", "value-negative");
+  if (risk.className) riesgoUniversidadEl.classList.add(risk.className);
+  riesgoUniversidadNoteEl.textContent = risk.note;
+  resumenUniversidadEjecutivoEl.textContent =
+    `Para ${children.length} hijo(s), el ahorro requerido es ${formatMoney(contribution)} mensual ` +
+    `(${formatMoney(annualContribution)} anual) durante ${contributionYears} años.`;
 
   const switchMonth = schedule.firstMonth;
   const switchYears = (switchMonth / 12).toFixed(1);
@@ -863,6 +930,9 @@ function downloadUniversityPdf() {
   });
 
   const summaryRows = [
+    ["Semáforo de viabilidad", riesgoUniversidadEl.textContent.trim()],
+    ["Comentario de riesgo", riesgoUniversidadNoteEl.textContent.trim()],
+    ["Resumen ejecutivo", resumenUniversidadEjecutivoEl.textContent.trim()],
     ["Ahorro mensual total (COP)", ahorroMensualEl.textContent.trim()],
     ["Ahorro mensual total (USD)", ahorroMensualUsdEl.textContent.trim()],
     ["Ahorro anual total (COP)", ahorroAnualEl.textContent.trim()],

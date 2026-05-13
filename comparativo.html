@@ -20,6 +20,7 @@
           <a href="rendimientos.html">Rendimientos</a>
           <a href="devaluacion.html">Devaluacion</a>
           <a class="active" href="comparativo.html">Comparativo</a>
+          <a href="comparativo-backtest.html">Backtest</a>
         </div>
       </nav>
 
@@ -151,6 +152,14 @@
               </label>
 
               <label>
+                Modo cuenta espejo
+                <select id="modo-cuenta-espejo">
+                  <option value="sin-retiros">Sin retiros (solo aportes)</option>
+                  <option value="con-retiros">Con retiros por flujo positivo</option>
+                </select>
+              </label>
+
+              <label>
                 TRM inicial (COP/USD)
                 <input id="trm-inicial-comp" type="number" min="1" step="0.01" placeholder="Ej: 4000" />
               </label>
@@ -175,6 +184,10 @@
             </div>
           </form>
           <p class="note" id="comparativo-trm-note">TRM actual: cargando...</p>
+          <p class="note-inline">
+            Cuenta espejo: invierte en USD, en cada periodo, el mismo flujo que habrías pagado en el apartamento
+            (cuota inicial, crédito y costos del inversionista), convertido con la TRM del periodo.
+          </p>
         </section>
 
         <section class="card result-card">
@@ -189,6 +202,12 @@
               <p class="label">Ventaja de la cuenta USD al horizonte</p>
               <p class="value" id="res-delta-horizonte">$0,00</p>
               <p class="note-inline" id="res-delta-horizonte-label">Si es positivo, gana la cuenta USD.</p>
+            </div>
+            <div>
+              <p class="label">Resumen ejecutivo</p>
+              <p class="note-inline" id="resumen-comparativo-ejecutivo">
+                Calcula para ver una conclusión rápida para cliente.
+              </p>
             </div>
           </div>
 
@@ -302,3 +321,5 @@
     <script src="comparativo.js"></script>
   </body>
 </html>
+
+

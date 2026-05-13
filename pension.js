@@ -28,6 +28,9 @@ const tasaPeriodoEl = document.getElementById("tasa-periodo");
 const tablaResumenEl = document.getElementById("tabla-pension-resumen");
 const tablaBody = document.getElementById("tabla-pension-body");
 const pensionNoteEl = document.getElementById("pension-note");
+const riesgoPensionEl = document.getElementById("riesgo-pension");
+const riesgoPensionNoteEl = document.getElementById("riesgo-pension-note");
+const resumenPensionEjecutivoEl = document.getElementById("resumen-pension-ejecutivo");
 
 const BANREP_URL =
   "https://suameca.banrep.gov.co/estadisticas-economicas/informacionSerie/1/tasa_cambio_peso_colombiano_trm_dolar_usd/";
@@ -52,6 +55,7 @@ const usdFmt = new Intl.NumberFormat("en-US", {
 });
 
 let trmData = null;
+let lastPensionResult = null;
 
 function formatMoney(value) {
   return `$${moneyFmt.format(value)}`;
@@ -276,6 +280,58 @@ function clearTable() {
   tablaBody.innerHTML = "";
 }
 
+function clearExecutiveSummary() {
+  riesgoPensionEl.textContent = "-";
+  riesgoPensionEl.classList.remove("value-positive", "value-negative");
+  riesgoPensionNoteEl.textContent = "Calcula para ver el diagnóstico.";
+  resumenPensionEjecutivoEl.textContent =
+    "Calcula para ver una conclusión rápida para cliente.";
+  lastPensionResult = null;
+}
+
+function evaluatePensionRisk({
+  aniosRetiro,
+  aniosAhorro,
+  aporte,
+  ingresoBase,
+  rentabilidad,
+  inflacion,
+}) {
+  let score = 0;
+  if (aniosAhorro < 8) score += 2;
+  else if (aniosAhorro < 12) score += 1;
+
+  if (aniosRetiro > 0 && aniosAhorro / aniosRetiro < 0.5) score += 1;
+
+  const cargaAporte = ingresoBase > 0 ? aporte / ingresoBase : 0;
+  if (cargaAporte > 0.8) score += 2;
+  else if (cargaAporte > 0.5) score += 1;
+
+  if (rentabilidad - inflacion < 2) score += 1;
+
+  if (score <= 1) {
+    return {
+      level: "Bajo",
+      note: "Meta alcanzable con holgura bajo los supuestos actuales.",
+      className: "value-positive",
+    };
+  }
+
+  if (score <= 3) {
+    return {
+      level: "Medio",
+      note: "Meta viable, pero sensible a cambios de rentabilidad o disciplina de aportes.",
+      className: "",
+    };
+  }
+
+  return {
+    level: "Alto",
+    note: "La meta exige alta disciplina o ajustes en horizonte/aporte.",
+    className: "value-negative",
+  };
+}
+
 function updateRetiroFields() {
   const isPerpetua = tipoRetiroInput.value === "perpetua";
   duracionRetiroInput.disabled = isPerpetua;
@@ -309,6 +365,7 @@ function calculate() {
     tablaResumenEl.textContent = "Ingresa los datos para ver la tabla.";
     pensionNoteEl.textContent = "Ingresa los datos para ver el resultado.";
     clearTable();
+    clearExecutiveSummary();
     return;
   }
 
@@ -327,6 +384,7 @@ function calculate() {
     tasaPeriodoEl.textContent = "0%";
     tablaResumenEl.textContent = "Ingresa los datos para ver la tabla.";
     clearTable();
+    clearExecutiveSummary();
     return;
   }
 
@@ -474,6 +532,22 @@ function calculate() {
       ? "Retiro perpetuo"
       : `Retiro por ${duracionRetiro || 0} años`;
 
+  const risk = evaluatePensionRisk({
+    aniosRetiro,
+    aniosAhorro,
+    aporte,
+    ingresoBase: ingresoCop,
+    rentabilidad,
+    inflacion,
+  });
+  riesgoPensionEl.textContent = risk.level;
+  riesgoPensionEl.classList.remove("value-positive", "value-negative");
+  if (risk.className) riesgoPensionEl.classList.add(risk.className);
+  riesgoPensionNoteEl.textContent = risk.note;
+  resumenPensionEjecutivoEl.textContent =
+    `Con ${aniosAhorro} años de ahorro para retirarte en ${aniosRetiro} años, ` +
+    `el aporte ${aporteMensual ? "mensual" : "anual"} estimado es ${formatMoney(aporte)}.`;
+
   pensionNoteEl.textContent =
     nota || `${retiroLabel}. Capital se proyecta con rentabilidad conservadora desde el retiro.`;
   const retiroDisplayPeriods =
@@ -520,6 +594,20 @@ function calculate() {
     `;
     tablaBody.appendChild(row);
   }
+
+  lastPensionResult = {
+    currency,
+    aporte,
+    aporteMensual,
+    ingresoAjustado,
+    capitalRequerido,
+    totalAportado,
+    totalRetiros,
+    aniosRetiro,
+    aniosAhorro,
+    risk,
+    retiroLabel,
+  };
 }
 
 function buildTableRowsFromTbody(tbody) {
@@ -579,6 +667,9 @@ function downloadPensionPdf() {
   });
 
   const summaryRows = [
+    ["Semáforo de viabilidad", riesgoPensionEl.textContent.trim()],
+    ["Comentario de riesgo", riesgoPensionNoteEl.textContent.trim()],
+    ["Resumen ejecutivo", resumenPensionEjecutivoEl.textContent.trim()],
     [aporteLabelEl.textContent.trim(), aporteEl.textContent.trim()],
     ["Aporte requerido (USD)", aporteUsdEl.textContent.trim()],
     ["Ingreso ajustado (COP)", ingresoAjustadoEl.textContent.trim()],
